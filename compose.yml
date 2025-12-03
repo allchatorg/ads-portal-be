@@ -1,0 +1,42 @@
+services:
+  redis-ad-portal:
+    image: redis:7.2
+    container_name: redis-ad-portal
+    restart: always
+    ports:
+      - "6380:6379"   # changed host port
+
+  postgres-ad-portal:
+    image: postgres:17
+    container_name: postgres-ad-portal
+    restart: always
+    environment:
+      POSTGRES_DB: ad_portal_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5433:5432"   # changed host port
+    volumes:
+      - postgres_data_ad-portal:/var/lib/postgresql/data
+
+  smtp4dev-ad-portal:
+    image: rnwood/smtp4dev:v3
+    container_name: smtp4dev-ad-portal
+    restart: always
+    ports:
+      - "5001:80"     # changed host port for Web UI
+      - "26:25"       # changed host port for SMTP
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:80 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    volumes:
+      - smtp4dev_data_ad-portal:/smtp4dev
+    environment:
+      - ServerOptions__Urls=http://*:80
+      - ServerOptions__HostName=smtp4dev-ad-portal
+
+volumes:
+  postgres_data_ad-portal:
+  smtp4dev_data_ad-portal:
