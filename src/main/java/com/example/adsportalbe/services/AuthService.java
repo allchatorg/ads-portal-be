@@ -1,0 +1,16 @@
+package com.example.adsportalbe.services;
+
+import com.example.adsportalbe.dto.auth.AuthResponseDto;
+import com.example.adsportalbe.dto.auth.LoginRequestDto;
+import com.example.adsportalbe.dto.auth.RegisterRequestDto;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+public interface AuthService {
+
+    AuthResponseDto register(RegisterRequestDto request, HttpServletRequest httpRequest);
+
+    AuthResponseDto login(LoginRequestDto request, HttpServletRequest httpRequest);
+
+    void logout(HttpServletRequest request, HttpServletResponse response);
+}

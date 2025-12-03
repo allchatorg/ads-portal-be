@@ -15,7 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "user")
+// Rename table to avoid using reserved keyword "user" in PostgreSQL
+@Table(name = "users")
 public class User implements UserDetails {
 
     @Id

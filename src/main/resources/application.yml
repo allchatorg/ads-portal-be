@@ -47,6 +47,23 @@ spring:
             driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
     jdbc:
       initialize-schema: always
+  session:
+    store-type: redis
+    redis:
+      flush-mode: on_save
+      namespace: spring:session
+    timeout: 1800s
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID
+        http-only: true
+        secure: false  # Set to true in production with HTTPS
+        same-site: lax
+        path: /
+        max-age: 1800s
 
 app:
   FRONT_END:
