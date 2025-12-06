@@ -1,8 +1,7 @@
 package com.example.adsportalbe.services;
 
-import com.example.adsportalbe.dto.auth.AuthResponseDto;
-import com.example.adsportalbe.dto.auth.LoginRequestDto;
-import com.example.adsportalbe.dto.auth.RegisterRequestDto;
+import com.example.adsportalbe.dto.auth.*;
+import com.example.adsportalbe.models.identity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -13,4 +12,8 @@ public interface AuthService {
     AuthResponseDto login(LoginRequestDto request, HttpServletRequest httpRequest);
 
     void logout(HttpServletRequest request, HttpServletResponse response);
+
+    void initiatePasswordReset(ForgotPasswordRequestDto request);
+
+    User resetPassword(ResetPasswordRequestDto request);
 }

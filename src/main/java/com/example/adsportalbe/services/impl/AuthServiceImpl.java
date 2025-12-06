@@ -1,23 +1,22 @@
 package com.example.adsportalbe.services.impl;
 
-import com.example.adsportalbe.dto.auth.AuthResponseDto;
-import com.example.adsportalbe.dto.auth.LoginRequestDto;
-import com.example.adsportalbe.dto.auth.RegisterRequestDto;
+import com.example.adsportalbe.dto.auth.*;
 import com.example.adsportalbe.enums.Role;
+import com.example.adsportalbe.models.UserActionToken;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.repositories.UserRepository;
 import com.example.adsportalbe.services.AuthService;
+import com.example.adsportalbe.services.MailService;
+import com.example.adsportalbe.services.UserActionTokenService;
+import com.example.adsportalbe.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +27,10 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final com.example.adsportalbe.security.JwtUtils jwtUtils;
+    private final UserActionTokenService tokenService;
+    private final MailService mailService;
+    private final UserService userService;
 
     @Override
     @Transactional
@@ -44,20 +47,16 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
-                .verified(true) // User needs to verify email
+                .verified(false) // User needs to verify email
                 .build();
 
         user = userRepository.save(user);
 
-        // Immediately authenticate the newly registered user and create a session
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+        // Send verification email
+        userService.sendEmailVerification(user);
 
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        securityContext.setAuthentication(authenticationToken);
-
-        HttpSession session = httpRequest.getSession(true);
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        // Generate JWT token
+        String jwtToken = jwtUtils.generateToken(user);
 
         return AuthResponseDto.builder()
                 .id(user.getId())
@@ -65,10 +64,7 @@ public class AuthServiceImpl implements AuthService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .accessToken(session.getId())
-                .tokenType("SESSION")
-                .expiresIn((long) session.getMaxInactiveInterval())
-                .message("Registration successful. You are now logged in.")
+                .accessToken(jwtToken)
                 .build();
     }
 
@@ -81,16 +77,11 @@ public class AuthServiceImpl implements AuthService {
                         request.getEmail(),
                         request.getPassword()));
 
-        // Set authentication in security context
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        securityContext.setAuthentication(authentication);
-
-        // Create new session and add security context
-        HttpSession session = httpRequest.getSession(true);
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
-
         // Get authenticated user
         User user = (User) authentication.getPrincipal();
+
+        // Generate JWT token
+        String jwtToken = jwtUtils.generateToken(user);
 
         return AuthResponseDto.builder()
                 .id(user.getId())
@@ -98,22 +89,34 @@ public class AuthServiceImpl implements AuthService {
                 .lastName(user.getLastName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .accessToken(session.getId())
-                .tokenType("SESSION")
-                .expiresIn((long) session.getMaxInactiveInterval())
-                .message("Login successful")
+                .accessToken(jwtToken)
                 .build();
     }
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        // Clear security context
+        // Client should handle logout by removing the token
         SecurityContextHolder.clearContext();
+    }
 
-        // Invalidate session
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
+    @Override
+    @Transactional
+    public void initiatePasswordReset(ForgotPasswordRequestDto request) {
+        if (request.email() == null && request.username() == null) {
+            throw new IllegalArgumentException("Email or username must be provided");
         }
+
+        User user = request.email() != null ? userService.findByEmail(request.email())
+                : userRepository.findByEmail(request.username())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        UserActionToken token = tokenService.createPasswordResetTokenForUser(user);
+        mailService.sendResetPasswordEmail(user, token.getToken());
+    }
+
+    @Override
+    @Transactional
+    public User resetPassword(ResetPasswordRequestDto request) {
+        return userService.resetPassword(request);
     }
 }

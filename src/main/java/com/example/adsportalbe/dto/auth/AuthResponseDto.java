@@ -17,9 +17,6 @@ public class AuthResponseDto {
     private String lastName;
     private String email;
     private Role role;
-    // Authentication token information (for session-based or JWT auth)
-    private String accessToken;    // In current implementation, this will be the HTTP session ID after login
-    private String tokenType;      // e.g., "SESSION" or "Bearer"
-    private Long expiresIn;        // seconds until expiration
-    private String message;
+    private String accessToken;
+    private Long expiresIn;
 }
