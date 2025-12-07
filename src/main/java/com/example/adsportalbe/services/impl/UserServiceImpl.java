@@ -1,7 +1,10 @@
 package com.example.adsportalbe.services.impl;
 
+import com.example.adsportalbe.dto.UserDto;
+import com.example.adsportalbe.dto.auth.ChangePasswordRequestDto;
 import com.example.adsportalbe.dto.auth.ResetPasswordRequestDto;
 import com.example.adsportalbe.enums.TokenType;
+import com.example.adsportalbe.mappers.UserMapper;
 import com.example.adsportalbe.models.UserActionToken;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.repositories.UserRepository;
@@ -23,6 +26,7 @@ public class UserServiceImpl implements UserService {
     private final UserActionTokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final UserMapper userMapper;
 
     @Override
     public User findByEmail(String email) {
@@ -79,7 +83,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userActionToken.getUser();
-        user.setVerified(true);
+        user.setEmailVerified(true);
         userActionToken.setUsed(true);
         tokenService.save(userActionToken);
 
@@ -89,5 +93,24 @@ public class UserServiceImpl implements UserService {
     @Override
     public User save(User user) {
         return userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(ChangePasswordRequestDto request, User user) {
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new IllegalStateException("Wrong password");
+        }
+
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            throw new IllegalArgumentException("New password and confirmation do not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        save(user);
+    }
+
+    @Override
+    public UserDto getCurrentUser(User user) {
+        return userMapper.toUserDto(user);
     }
 }

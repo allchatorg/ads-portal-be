@@ -1,5 +1,6 @@
 package com.example.adsportalbe.controllers;
 
+import com.example.adsportalbe.dto.UserDto;
 import com.example.adsportalbe.dto.auth.*;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.services.AuthService;
@@ -10,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -38,6 +36,13 @@ public class AuthController {
             HttpServletRequest httpRequest) {
         AuthResponseDto response = authService.login(request, httpRequest);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> getCurrentUser(
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        UserDto userDto = userService.getCurrentUser(user);
+        return ResponseEntity.ok(userDto);
     }
 
     @PostMapping("/logout")
@@ -74,5 +79,13 @@ public class AuthController {
             @Valid @RequestBody VerifyEmailRequestDto request) {
         userService.verifyEmail(request.token());
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequestDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        userService.changePassword(request, user);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
 }

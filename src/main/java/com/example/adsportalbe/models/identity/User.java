@@ -38,7 +38,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    private boolean verified;
+    @Column(nullable = false)
+    private boolean emailVerified;
+
+    @Column(nullable = false)
+    private boolean marketingEmails;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

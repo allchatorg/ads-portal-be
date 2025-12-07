@@ -38,7 +38,7 @@ public class UserActionTokenServiceImpl implements UserActionTokenService {
         if (user.getEmail() == null || user.getEmail().isEmpty()) {
             throw new IllegalArgumentException("User email cannot be null or empty for email verification token.");
         }
-        if (user.isVerified()) {
+        if (user.isEmailVerified()) {
             throw new IllegalStateException("User is already verified.");
         }
 

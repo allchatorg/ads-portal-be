@@ -47,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
-                .verified(false) // User needs to verify email
+                .emailVerified(false) // User needs to verify email
                 .build();
 
         user = userRepository.save(user);
