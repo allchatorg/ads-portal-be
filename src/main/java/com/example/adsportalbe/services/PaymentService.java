@@ -1,0 +1,17 @@
+package com.example.adsportalbe.services;
+
+import com.example.adsportalbe.dto.payment.PaymentMethodDto;
+import com.example.adsportalbe.models.identity.User;
+import com.stripe.exception.StripeException;
+
+import java.util.List;
+
+public interface PaymentService {
+    String createCustomer(User user) throws StripeException;
+
+    List<PaymentMethodDto> getPaymentMethods(User user) throws StripeException;
+
+    void addPaymentMethod(User user, String paymentMethodId) throws StripeException;
+
+    void removePaymentMethod(User user, String paymentMethodId) throws StripeException;
+}

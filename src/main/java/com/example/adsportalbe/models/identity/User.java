@@ -45,6 +45,9 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean subscribedToMarketingEmails = true;
 
+    @Column(name = "stripe_customer_id")
+    private String stripeCustomerId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

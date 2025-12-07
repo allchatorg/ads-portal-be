@@ -85,6 +85,9 @@ twilio:
   auth-token: ${TWILIO_TOKEN}
   phone-number: ${TWILIO_PHONE_NUMBER}
 
+stripe:
+  api-key: ${STRIPE_API_KEY}
+
 logging:
   level:
     org:
