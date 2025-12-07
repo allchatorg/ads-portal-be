@@ -15,4 +15,5 @@ public class PaymentMethodDto {
     private String last4;
     private Long expMonth;
     private Long expYear;
+    private String cardholderName;
 }

@@ -26,10 +26,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    @Value("${stripe.api-key}")
-    private String stripeApiKey;
-
     private final UserRepository userRepository;
+    @Value("${STRIPE_API_KEY}")
+    private String stripeApiKey;
 
     @PostConstruct
     public void init() {
@@ -74,6 +73,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .last4(pm.getCard().getLast4())
                         .expMonth(pm.getCard().getExpMonth())
                         .expYear(pm.getCard().getExpYear())
+                        .cardholderName(pm.getBillingDetails() != null ? pm.getBillingDetails().getName() : null)
                         .build());
             }
         }

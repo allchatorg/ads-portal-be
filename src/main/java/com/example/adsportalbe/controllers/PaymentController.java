@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/payment/methods")
+@RequestMapping("/api/payment/methods")
 @RequiredArgsConstructor
 public class PaymentController {
 
@@ -28,14 +28,14 @@ public class PaymentController {
 
     @PostMapping
     public ResponseEntity<Void> addPaymentMethod(@AuthenticationPrincipal User user,
-            @RequestBody @Valid AddPaymentMethodRequestDto request) throws StripeException {
+                                                 @RequestBody @Valid AddPaymentMethodRequestDto request) throws StripeException {
         paymentService.addPaymentMethod(user, request.getPaymentMethodId());
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removePaymentMethod(@AuthenticationPrincipal User user,
-            @PathVariable("id") String paymentMethodId) throws StripeException {
+                                                    @PathVariable("id") String paymentMethodId) throws StripeException {
         paymentService.removePaymentMethod(user, paymentMethodId);
         return ResponseEntity.ok().build();
     }
