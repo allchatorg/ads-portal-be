@@ -82,6 +82,25 @@ public class UserActionTokenServiceImpl implements UserActionTokenService {
         return save(token);
     }
 
+    @Override
+    public UserActionToken createEmailUpdateTokenForUser(User user, String newEmail) {
+        if (newEmail == null || newEmail.isEmpty()) {
+            throw new IllegalArgumentException("New email cannot be null or empty for email update token.");
+        }
+
+        String sixDigitToken = generateSixDigitToken();
+
+        UserActionToken token = UserActionToken.builder()
+                .user(user)
+                .email(newEmail) // Store the new email in the token
+                .token(sixDigitToken)
+                .expiryDate(Instant.now().plusSeconds(EMAIL_VERIFICATION_TOKEN_EXPIRATION))
+                .type(TokenType.EMAIL_UPDATE)
+                .build();
+
+        return save(token);
+    }
+
     private String generateSixDigitToken() {
         return String.format("%06d", (int) (Math.random() * 1000000));
     }

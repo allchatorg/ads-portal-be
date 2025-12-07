@@ -88,4 +88,22 @@ public class AuthController {
         userService.changePassword(request, user);
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
+
+    @PostMapping("/request-email-update")
+    public ResponseEntity<Map<String, String>> requestEmailUpdate(
+            @Valid @RequestBody RequestEmailUpdateDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        userService.requestEmailUpdate(request, user);
+        return ResponseEntity.ok(Map.of("message", "Verification code sent to new email"));
+    }
+
+    @PostMapping("/verify-email-update")
+    public ResponseEntity<Map<String, String>> verifyEmailUpdate(
+            @Valid @RequestBody VerifyEmailUpdateDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        User updatedUser = userService.verifyEmailUpdate(request, user);
+        return ResponseEntity.ok(Map.of(
+                "message", "Email updated successfully",
+                "newEmail", updatedUser.getEmail()));
+    }
 }

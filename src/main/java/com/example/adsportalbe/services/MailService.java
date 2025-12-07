@@ -7,6 +7,7 @@ public interface MailService {
 
     void sendResetPasswordEmail(User user, String token);
 
-
     void sendVerificationEmail(User user, String code);
+
+    void sendEmailUpdateVerification(String newEmail, String code);
 }

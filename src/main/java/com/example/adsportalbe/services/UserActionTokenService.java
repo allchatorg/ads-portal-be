@@ -11,6 +11,8 @@ public interface UserActionTokenService {
 
     UserActionToken createPhoneVerificationToken(User currentUser, String number);
 
+    UserActionToken createEmailUpdateTokenForUser(User user, String newEmail);
+
     UserActionToken findToken(String token);
 
     UserActionToken save(UserActionToken userActionToken);
