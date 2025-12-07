@@ -106,4 +106,12 @@ public class AuthController {
                 "message", "Email updated successfully",
                 "newEmail", updatedUser.getEmail()));
     }
+
+    @PatchMapping("/marketing-preferences")
+    public ResponseEntity<Map<String, String>> updateMarketingPreferences(
+            @Valid @RequestBody UpdateMarketingPreferencesDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        userService.updateMarketingPreferences(request, user);
+        return ResponseEntity.ok(Map.of("message", "Marketing preferences updated successfully"));
+    }
 }

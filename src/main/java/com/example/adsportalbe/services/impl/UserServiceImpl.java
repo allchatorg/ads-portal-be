@@ -1,10 +1,7 @@
 package com.example.adsportalbe.services.impl;
 
 import com.example.adsportalbe.dto.UserDto;
-import com.example.adsportalbe.dto.auth.ChangePasswordRequestDto;
-import com.example.adsportalbe.dto.auth.RequestEmailUpdateDto;
-import com.example.adsportalbe.dto.auth.ResetPasswordRequestDto;
-import com.example.adsportalbe.dto.auth.VerifyEmailUpdateDto;
+import com.example.adsportalbe.dto.auth.*;
 import com.example.adsportalbe.enums.TokenType;
 import com.example.adsportalbe.mappers.UserMapper;
 import com.example.adsportalbe.models.UserActionToken;
@@ -17,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -136,6 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public User verifyEmailUpdate(VerifyEmailUpdateDto request, User user) {
         UserActionToken token = tokenService.findToken(request.verificationCode());
 
@@ -168,5 +167,11 @@ public class UserServiceImpl implements UserService {
         tokenService.save(token);
 
         return save(user);
+    }
+
+    @Override
+    public void updateMarketingPreferences(UpdateMarketingPreferencesDto request, User user) {
+        user.setSubscribedToMarketingEmails(request.getSubscribedToMarketingEmails());
+        userRepository.save(user);
     }
 }

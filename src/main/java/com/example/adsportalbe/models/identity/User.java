@@ -42,7 +42,8 @@ public class User implements UserDetails {
     private boolean emailVerified;
 
     @Column(nullable = false)
-    private boolean marketingEmails;
+    @Builder.Default
+    private boolean subscribedToMarketingEmails = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

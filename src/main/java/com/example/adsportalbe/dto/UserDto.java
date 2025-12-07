@@ -18,6 +18,6 @@ public class UserDto {
     private String email;
     private String phoneNumber;
     private boolean emailVerified;
-    private boolean marketingEmails;
+    private boolean subscribedToMarketingEmails;
     private Role role;
 }

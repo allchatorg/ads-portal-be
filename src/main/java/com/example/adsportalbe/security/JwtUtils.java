@@ -49,7 +49,7 @@ public class JwtUtils {
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {
         return Jwts.builder()
                 .setClaims(extraClaims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(String.valueOf(((User) userDetails).getId()))
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
@@ -57,8 +57,8 @@ public class JwtUtils {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        final String userId = extractUsername(token);
+        return (userId.equals(String.valueOf(((User) userDetails).getId()))) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
