@@ -7,9 +7,11 @@ import com.example.adsportalbe.services.PaymentService;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.model.PaymentMethodCollection;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PaymentMethodAttachParams;
 import com.stripe.param.PaymentMethodListParams;
 import jakarta.annotation.PostConstruct;
@@ -107,5 +109,46 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         paymentMethod.detach();
+    }
+
+    @Override
+    public String authorizePayment(User user, String paymentMethodId, Long amountCents, String stripeAccount)
+            throws StripeException {
+        String customerId = createCustomer(user);
+
+        PaymentIntentCreateParams.Builder paramsBuilder = PaymentIntentCreateParams.builder()
+                .setAmount(amountCents)
+                .setCurrency("usd") // Assuming USD for now
+                .setCustomer(customerId)
+                .setPaymentMethod(paymentMethodId)
+                .setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)
+                .setConfirm(true)
+                .setReturnUrl("http://localhost:3000/payment-return"); // Placeholder
+
+        if (stripeAccount != null && !stripeAccount.isEmpty() && !stripeAccount.equals("TBD_STRIPE_ACCOUNT_ID")) {
+            // If there's a connected account involved, set transfer data or on_behalf_of
+            // logic
+            // For now, standard charge
+        }
+
+        PaymentIntent paymentIntent = PaymentIntent.create(paramsBuilder.build());
+        return paymentIntent.getId();
+    }
+
+    @Override
+    public PaymentMethodDto getPaymentMethod(String paymentMethodId) throws StripeException {
+        PaymentMethod pm = PaymentMethod.retrieve(paymentMethodId);
+
+        if (pm.getCard() != null) {
+            return PaymentMethodDto.builder()
+                    .id(pm.getId())
+                    .brand(pm.getCard().getBrand())
+                    .last4(pm.getCard().getLast4())
+                    .expMonth(pm.getCard().getExpMonth())
+                    .expYear(pm.getCard().getExpYear())
+                    .cardholderName(pm.getBillingDetails() != null ? pm.getBillingDetails().getName() : null)
+                    .build();
+        }
+        return null;
     }
 }

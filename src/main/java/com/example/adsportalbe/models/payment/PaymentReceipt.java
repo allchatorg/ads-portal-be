@@ -27,6 +27,10 @@ public class PaymentReceipt {
     private String cardLast4; // “4242”
     private String cardholderName;
 
+    private String status; // e.g. AUTHORIZED, CAPTURED, REFUNDED
+    private String provider; // e.g. STRIPE
+    private String currency; // e.g. USD
+
     private Double amountPaid;
 
     private LocalDateTime paidAt;

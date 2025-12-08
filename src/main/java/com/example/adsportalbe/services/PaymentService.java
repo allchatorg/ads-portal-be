@@ -14,4 +14,9 @@ public interface PaymentService {
     void addPaymentMethod(User user, String paymentMethodId) throws StripeException;
 
     void removePaymentMethod(User user, String paymentMethodId) throws StripeException;
+
+    String authorizePayment(User user, String paymentMethodId, Long amountCents, String stripeAccount)
+            throws StripeException;
+
+    PaymentMethodDto getPaymentMethod(String paymentMethodId) throws StripeException;
 }
