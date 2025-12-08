@@ -1,4 +1,4 @@
-package com.example.adsportalbe.config;
+package com.example.adsportalbe.configs;
 
 import com.example.adsportalbe.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
