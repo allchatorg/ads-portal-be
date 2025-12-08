@@ -98,7 +98,7 @@ public class AdFormatServiceImpl implements AdFormatService {
                     .type(AdFormatType.VIDEO)
                     .title("Video Ad")
                     .description("Engaging video content")
-                    .pricePerMille(30.0)
+                    .pricePerMille(40.0)
                     .recommended(true)
                     .features(List.of("MP4 support", "High conversion rate"))
                     .build();
