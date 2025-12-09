@@ -1,11 +1,13 @@
 package com.example.adsportalbe.services.impl;
 
+import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
 import com.example.adsportalbe.dto.ad.AdDto;
 import com.example.adsportalbe.dto.ad.AdStatusCountDto;
 import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
 import com.example.adsportalbe.dto.payment.PaymentMethodDto;
 import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.enums.AdStatus;
+import com.example.adsportalbe.enums.Role;
 import com.example.adsportalbe.mappers.AdMapper;
 import com.example.adsportalbe.models.ad.*;
 import com.example.adsportalbe.models.identity.User;
@@ -232,5 +234,19 @@ public class AdServiceImpl implements AdService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
         return adRepository.getAdStatusCountsByUserId(userId);
+    }
+
+    @Override
+    public AdDetailedViewDto getAdById(Long id, User user) {
+        Ad ad = adRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ad not found with id: " + id));
+
+        // Access control: regular users can only view their own ads
+        if (user.getRole() == Role.USER) {
+            if (!ad.getOwner().getId().equals(user.getId())) {
+                throw new RuntimeException("Access denied: You can only view your own ads");
+            }
+        }
+        return adMapper.toDetailedDto(ad);
     }
 }

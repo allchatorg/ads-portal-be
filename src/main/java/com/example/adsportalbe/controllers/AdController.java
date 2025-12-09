@@ -1,5 +1,6 @@
 package com.example.adsportalbe.controllers;
 
+import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
 import com.example.adsportalbe.dto.ad.AdDto;
 import com.example.adsportalbe.dto.ad.AdStatusCountDto;
 import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
@@ -83,6 +84,18 @@ public class AdController {
         Long userId = user.getId();
         List<AdStatusCountDto> result = adService.getAdStatusCountsByUserId(userId);
 
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AdDetailedViewDto> getAdById(@PathVariable Long id,
+                                                       @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByEmail(userDetails.getUsername());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        AdDetailedViewDto result = adService.getAdById(id, user);
         return ResponseEntity.ok(result);
     }
 }

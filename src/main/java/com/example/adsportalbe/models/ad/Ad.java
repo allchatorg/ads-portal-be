@@ -55,6 +55,9 @@ public class Ad {
     private LocalDateTime submittedAt;
     private LocalDateTime approvedAt;
 
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @OneToOne(mappedBy = "ad", cascade = CascadeType.ALL)
     private PaymentReceipt receipt;
 }

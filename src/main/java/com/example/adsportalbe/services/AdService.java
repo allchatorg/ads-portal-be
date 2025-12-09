@@ -1,5 +1,6 @@
 package com.example.adsportalbe.services;
 
+import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
 import com.example.adsportalbe.dto.ad.AdDto;
 import com.example.adsportalbe.dto.ad.AdStatusCountDto;
 import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
@@ -19,4 +20,6 @@ public interface AdService {
     List<AdStatusCountDto> getAdStatusCounts();
 
     List<AdStatusCountDto> getAdStatusCountsByUserId(Long userId);
+
+    AdDetailedViewDto getAdById(Long id, User user);
 }
