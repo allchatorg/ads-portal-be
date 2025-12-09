@@ -1,6 +1,7 @@
 package com.example.adsportalbe.models.identity;
 
 import com.example.adsportalbe.enums.Role;
+import com.example.adsportalbe.models.Base;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +18,7 @@ import java.util.List;
 @Entity
 // Rename table to avoid using reserved keyword "user" in PostgreSQL
 @Table(name = "users")
-public class User implements UserDetails {
+public class User extends Base implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
