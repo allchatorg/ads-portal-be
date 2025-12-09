@@ -6,7 +6,7 @@ import com.example.adsportalbe.models.payment.PaymentReceipt;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Entity
@@ -50,8 +50,8 @@ public class Ad {
     @Enumerated(EnumType.STRING)
     private AdStatus status;
 
-    private LocalDateTime submittedAt;
-    private LocalDateTime approvedAt;
+    private Instant submittedAt;
+    private Instant approvedAt;
 
     @Column(columnDefinition = "TEXT")
     private String rejectionReason;

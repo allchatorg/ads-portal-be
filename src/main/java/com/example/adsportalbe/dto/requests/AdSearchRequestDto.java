@@ -3,7 +3,7 @@ package com.example.adsportalbe.dto.requests;
 import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.AdFormatType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record AdSearchRequestDto(
@@ -14,6 +14,6 @@ public record AdSearchRequestDto(
         String sort,
         Long userId,
         String email,
-        LocalDateTime approvedAtStart,
-        LocalDateTime approvedAtEnd) {
+        Instant approvedAtStart,
+        Instant approvedAtEnd) {
 }

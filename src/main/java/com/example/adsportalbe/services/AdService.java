@@ -24,4 +24,6 @@ public interface AdService {
     AdDetailedViewDto getAdById(Long id, User user);
 
     AdDetailedViewDto rejectAd(Long adId, String rejectionReason) throws StripeException;
+
+    AdDetailedViewDto approveAd(Long adId) throws StripeException;
 }

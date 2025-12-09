@@ -56,4 +56,10 @@ public class AdminAdController {
         AdDetailedViewDto result = adService.rejectAd(request.getAdId(), request.getRejectionReason());
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/approve/{id}")
+    public ResponseEntity<AdDetailedViewDto> approveAd(@PathVariable Long id) throws StripeException {
+        AdDetailedViewDto result = adService.approveAd(id);
+        return ResponseEntity.ok(result);
+    }
 }

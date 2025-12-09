@@ -171,4 +171,23 @@ public class PaymentServiceImpl implements PaymentService {
                     paymentIntentId, paymentIntent.getStatus());
         }
     }
+
+    @Override
+    public void capturePayment(String paymentIntentId) throws StripeException {
+        if (paymentIntentId == null || paymentIntentId.isEmpty()) {
+            throw new IllegalArgumentException("Payment intent ID cannot be null or empty");
+        }
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+
+        // Capture the payment if it's capturable
+        if ("requires_capture".equals(paymentIntent.getStatus())) {
+            paymentIntent.capture();
+            log.info("Captured payment intent: {}", paymentIntentId);
+        } else {
+            throw new IllegalStateException(
+                    "Payment intent " + paymentIntentId + " cannot be captured, current status: "
+                            + paymentIntent.getStatus());
+        }
+    }
 }

@@ -21,4 +21,6 @@ public interface PaymentService {
     PaymentMethodDto getPaymentMethod(String paymentMethodId) throws StripeException;
 
     void cancelPaymentAuthorization(String paymentIntentId) throws StripeException;
+
+    void capturePayment(String paymentIntentId) throws StripeException;
 }

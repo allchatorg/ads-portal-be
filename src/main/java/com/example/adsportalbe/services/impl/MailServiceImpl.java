@@ -131,4 +131,27 @@ public class MailServiceImpl implements MailService {
             throw new RuntimeException("Failed to send ad rejection email", e);
         }
     }
+
+    @Override
+    public void sendAdApprovalEmail(User user, String adTitle) {
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("adTitle", adTitle);
+
+        String htmlContent = templateEngine.process("AD_APPROVAL_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Ad Approved - " + adTitle);
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send ad approval email", e);
+        }
+    }
 }

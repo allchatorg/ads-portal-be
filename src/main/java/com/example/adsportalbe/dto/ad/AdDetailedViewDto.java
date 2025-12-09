@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -19,8 +19,8 @@ public class AdDetailedViewDto {
     private AdFormatType formatType;
     private Integer viewsBought;
     private Double price;
-    private LocalDateTime submittedDate;
-    private LocalDateTime startDate;
+    private Instant submittedDate;
+    private Instant startDate;
     private String email;
     private Long userId;
     private AdStatus status;

@@ -29,7 +29,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -97,7 +97,7 @@ public class AdServiceImpl implements AdService {
                 .servedViews(0)
                 .totalCost(calculatedPrice)
                 .status(AdStatus.SUBMITTED)
-                .submittedAt(LocalDateTime.now())
+                .submittedAt(Instant.now())
                 .build();
 
         // Snapshot the format
@@ -299,6 +299,56 @@ public class AdServiceImpl implements AdService {
         }
 
         // 9. Return the rejected ad as AdDetailedViewDto
+        return adMapper.toDetailedDto(savedAd);
+    }
+
+    @Override
+    @Transactional
+    public AdDetailedViewDto approveAd(Long adId) throws StripeException {
+        // 1. Fetch ad by ID
+        Ad ad = adRepository.findById(adId)
+                .orElseThrow(() -> new RuntimeException("Ad not found with id: " + adId));
+
+        // 2. Validate ad is in SUBMITTED status
+        if (ad.getStatus() != AdStatus.SUBMITTED) {
+            throw new IllegalStateException(
+                    "Only ads with SUBMITTED status can be approved. Current status: " + ad.getStatus());
+        }
+
+        // 3. Capture payment
+        PaymentReceipt receipt = ad.getReceipt();
+        if (receipt != null && receipt.getStripePaymentIntentId() != null) {
+            try {
+                paymentService.capturePayment(receipt.getStripePaymentIntentId());
+
+                // 4. Update payment receipt status
+                receipt.setStatus("CAPTURED");
+            } catch (StripeException e) {
+                log.error("Failed to capture payment for ad {}: {}", adId, e.getMessage());
+                throw e;
+            }
+        } else {
+            throw new IllegalStateException("No payment receipt found for ad " + adId);
+        }
+
+        // 5. Update ad status to ACTIVE
+        ad.setStatus(AdStatus.ACTIVE);
+
+        // 6. Set approval timestamp
+        ad.setApprovedAt(Instant.now());
+
+        // 7. Save the ad
+        Ad savedAd = adRepository.save(ad);
+
+        // 8. Send approval email to ad owner
+        try {
+            mailService.sendAdApprovalEmail(ad.getOwner(), ad.getTitle());
+        } catch (Exception e) {
+            log.error("Failed to send approval email for ad {}: {}", adId, e.getMessage());
+            // Don't throw - approval should still succeed even if email fails
+        }
+
+        // 9. Return the approved ad as AdDetailedViewDto
         return adMapper.toDetailedDto(savedAd);
     }
 }
