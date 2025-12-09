@@ -80,19 +80,9 @@ public class AdController {
         if (user == null) {
             throw new RuntimeException("User not found");
         }
-
-        // For regular users, only allow querying their own counts
         Long userId = user.getId();
-        if (user.getRole() == Role.USER) {
-            // Regular users can only see their own counts
-            List<AdStatusCountDto> result = adService.getAdStatusCountsByUserId(userId);
-            return ResponseEntity.ok(result);
-        }
-
-        // For admins, they could query any user's counts or all counts
-        // For now, we'll return their own counts, but admins should use /status-counts
-        // for all
         List<AdStatusCountDto> result = adService.getAdStatusCountsByUserId(userId);
+
         return ResponseEntity.ok(result);
     }
 }
