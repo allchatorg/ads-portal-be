@@ -29,6 +29,9 @@ public class Ad {
     @ManyToOne(optional = false)
     private User owner;
 
+    @ManyToOne(optional = false)
+    private AdFormat format;
+
     // A single ad may use multiple formats (photo + text for example)
     @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(name = "ad_selected_formats", joinColumns = @JoinColumn(name = "ad_id"), inverseJoinColumns = @JoinColumn(name = "format_id"))

@@ -1,8 +1,12 @@
 package com.example.adsportalbe.services.impl;
 
+import com.example.adsportalbe.dto.ad.AdDto;
+import com.example.adsportalbe.dto.ad.AdStatusCountDto;
 import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
 import com.example.adsportalbe.dto.payment.PaymentMethodDto;
+import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.enums.AdStatus;
+import com.example.adsportalbe.mappers.AdMapper;
 import com.example.adsportalbe.models.ad.*;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.models.payment.PaymentReceipt;
@@ -10,9 +14,15 @@ import com.example.adsportalbe.repositories.AdFormatRepository;
 import com.example.adsportalbe.repositories.AdRepository;
 import com.example.adsportalbe.services.AdService;
 import com.example.adsportalbe.services.PaymentService;
+import com.example.adsportalbe.specifications.AdSpecification;
+import com.example.adsportalbe.utils.Utils;
 import com.stripe.exception.StripeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +39,16 @@ public class AdServiceImpl implements AdService {
     private final AdRepository adRepository;
     private final AdFormatRepository adFormatRepository;
     private final PaymentService paymentService;
+    private final AdMapper adMapper;
 
     @Override
     @Transactional
     public Ad createAd(CreateAdRequestDto request, User user) throws StripeException {
         // 1. Validate Input Basics
+        if (request.getTitle() == null || request.getTitle().isEmpty()) {
+            throw new IllegalArgumentException("Title cannot be empty");
+        }
+
         if (request.getViewsBought() == null || request.getViewsBought() <= 0) {
             throw new IllegalArgumentException("Views bought must be greater than 0");
         }
@@ -68,8 +83,9 @@ public class AdServiceImpl implements AdService {
 
         // 6. Create Ad Entity
         Ad ad = Ad.builder()
-                .title("Ad Campaign - " + request.getAdType()) // Default title or add to DTO
+                .title(request.getTitle())
                 .owner(user)
+                .format(format)
                 .imageUrl(request.getImageUrl())
                 .videoUrl(request.getVideoUrl())
                 .textContent(request.getText())
@@ -180,5 +196,33 @@ public class AdServiceImpl implements AdService {
 
         double totalCPM = baseCPM + textCPM;
         return (views / 1000.0) * totalCPM;
+    }
+
+    @Override
+    public Page<AdDto> searchAds(AdSearchRequestDto request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Search request cannot be null");
+        }
+
+        List<Sort.Order> sortOrders = Utils.jsonStringToSortOrder(request.sort());
+
+        // Default sort if none provided or empty
+        if (sortOrders.isEmpty()) {
+            sortOrders.add(Sort.Order.desc("submittedAt"));
+        }
+
+        PageRequest pageRequest = PageRequest.of(
+                request.page(),
+                request.size(),
+                Sort.by(sortOrders));
+
+        Specification<Ad> specification = AdSpecification.getSpecification(request);
+
+        return adRepository.findAll(specification, pageRequest).map(adMapper::toDto);
+    }
+
+    @Override
+    public List<AdStatusCountDto> getAdStatusCounts() {
+        return adRepository.getAdStatusCounts();
     }
 }

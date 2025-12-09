@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateAdRequestDto {
+    private String title;
     private AdFormatType adType;
     private String text;
     private String imageUrl;
