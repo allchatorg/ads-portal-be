@@ -5,6 +5,7 @@ import com.example.adsportalbe.models.ad.Ad;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,4 +15,7 @@ public interface AdRepository extends JpaRepository<Ad, Long>, JpaSpecificationE
 
     @Query("SELECT new com.example.adsportalbe.dto.ad.AdStatusCountDto(a.status, COUNT(a)) FROM Ad a GROUP BY a.status")
     List<AdStatusCountDto> getAdStatusCounts();
+
+    @Query("SELECT new com.example.adsportalbe.dto.ad.AdStatusCountDto(a.status, COUNT(a)) FROM Ad a WHERE a.owner.id = :userId GROUP BY a.status")
+    List<AdStatusCountDto> getAdStatusCountsByUserId(@Param("userId") Long userId);
 }

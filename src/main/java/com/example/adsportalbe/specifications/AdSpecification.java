@@ -29,9 +29,19 @@ public class AdSpecification {
                 predicates.add(
                         criteriaBuilder.like(
                                 criteriaBuilder.lower(root.get("owner").get("email")),
-                                "%" + filterDto.email().toLowerCase() + "%"
-                        )
-                );
+                                "%" + filterDto.email().toLowerCase() + "%"));
+            }
+
+            if (filterDto.approvedAtStart() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("approvedAt"),
+                        filterDto.approvedAtStart()));
+            }
+
+            if (filterDto.approvedAtEnd() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("approvedAt"),
+                        filterDto.approvedAtEnd()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

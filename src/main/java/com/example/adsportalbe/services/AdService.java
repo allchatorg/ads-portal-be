@@ -17,4 +17,6 @@ public interface AdService {
     Page<AdDto> searchAds(AdSearchRequestDto request);
 
     List<AdStatusCountDto> getAdStatusCounts();
+
+    List<AdStatusCountDto> getAdStatusCountsByUserId(Long userId);
 }

@@ -225,4 +225,12 @@ public class AdServiceImpl implements AdService {
     public List<AdStatusCountDto> getAdStatusCounts() {
         return adRepository.getAdStatusCounts();
     }
+
+    @Override
+    public List<AdStatusCountDto> getAdStatusCountsByUserId(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID cannot be null");
+        }
+        return adRepository.getAdStatusCountsByUserId(userId);
+    }
 }
