@@ -4,20 +4,18 @@ import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.models.payment.PaymentReceipt;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "ads")
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class Ad {
 
     @Id

@@ -15,6 +15,7 @@ import com.example.adsportalbe.models.payment.PaymentReceipt;
 import com.example.adsportalbe.repositories.AdFormatRepository;
 import com.example.adsportalbe.repositories.AdRepository;
 import com.example.adsportalbe.services.AdService;
+import com.example.adsportalbe.services.MailService;
 import com.example.adsportalbe.services.PaymentService;
 import com.example.adsportalbe.specifications.AdSpecification;
 import com.example.adsportalbe.utils.Utils;
@@ -41,6 +42,7 @@ public class AdServiceImpl implements AdService {
     private final AdRepository adRepository;
     private final AdFormatRepository adFormatRepository;
     private final PaymentService paymentService;
+    private final MailService mailService;
     private final AdMapper adMapper;
 
     @Override
@@ -248,5 +250,55 @@ public class AdServiceImpl implements AdService {
             }
         }
         return adMapper.toDetailedDto(ad);
+    }
+
+    @Override
+    @Transactional
+    public AdDetailedViewDto rejectAd(Long adId, String rejectionReason) throws StripeException {
+        // 1. Fetch ad by ID
+        Ad ad = adRepository.findById(adId)
+                .orElseThrow(() -> new RuntimeException("Ad not found with id: " + adId));
+
+        // 2. Validate ad is in SUBMITTED status
+        if (ad.getStatus() != AdStatus.SUBMITTED) {
+            throw new IllegalStateException(
+                    "Only ads with SUBMITTED status can be rejected. Current status: " + ad.getStatus());
+        }
+
+        // 3. Update ad status to REJECTED
+        ad.setStatus(AdStatus.REJECTED);
+
+        // 4. Set rejection reason
+        ad.setRejectionReason(rejectionReason);
+
+        // 5. Cancel payment authorization
+        PaymentReceipt receipt = ad.getReceipt();
+        if (receipt != null && receipt.getStripePaymentIntentId() != null) {
+            try {
+                paymentService.cancelPaymentAuthorization(receipt.getStripePaymentIntentId());
+
+                // 6. Update payment receipt status
+                receipt.setStatus("CANCELLED");
+            } catch (StripeException e) {
+                log.error("Failed to cancel payment for ad {}: {}", adId, e.getMessage());
+                throw e;
+            }
+        } else {
+            log.warn("No payment receipt found for ad {}", adId);
+        }
+
+        // 7. Save the ad
+        Ad savedAd = adRepository.save(ad);
+
+        // 8. Send rejection email to ad owner
+        try {
+            mailService.sendAdRejectionEmail(ad.getOwner(), ad.getTitle(), rejectionReason);
+        } catch (Exception e) {
+            log.error("Failed to send rejection email for ad {}: {}", adId, e.getMessage());
+            // Don't throw - rejection should still succeed even if email fails
+        }
+
+        // 9. Return the rejected ad as AdDetailedViewDto
+        return adMapper.toDetailedDto(savedAd);
     }
 }

@@ -10,4 +10,6 @@ public interface MailService {
     void sendVerificationEmail(User user, String code);
 
     void sendEmailUpdateVerification(String newEmail, String code);
+
+    void sendAdRejectionEmail(User user, String adTitle, String rejectionReason);
 }

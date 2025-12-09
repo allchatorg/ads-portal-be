@@ -107,4 +107,28 @@ public class MailServiceImpl implements MailService {
             throw new RuntimeException("Failed to send email update verification", e);
         }
     }
+
+    @Override
+    public void sendAdRejectionEmail(User user, String adTitle, String rejectionReason) {
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("adTitle", adTitle);
+        context.setVariable("rejectionReason", rejectionReason);
+
+        String htmlContent = templateEngine.process("AD_REJECTION_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Ad Rejected - " + adTitle);
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send ad rejection email", e);
+        }
+    }
 }

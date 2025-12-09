@@ -22,4 +22,6 @@ public interface AdService {
     List<AdStatusCountDto> getAdStatusCountsByUserId(Long userId);
 
     AdDetailedViewDto getAdById(Long id, User user);
+
+    AdDetailedViewDto rejectAd(Long adId, String rejectionReason) throws StripeException;
 }

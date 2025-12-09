@@ -151,4 +151,24 @@ public class PaymentServiceImpl implements PaymentService {
         }
         return null;
     }
+
+    @Override
+    public void cancelPaymentAuthorization(String paymentIntentId) throws StripeException {
+        if (paymentIntentId == null || paymentIntentId.isEmpty()) {
+            throw new IllegalArgumentException("Payment intent ID cannot be null or empty");
+        }
+
+        PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
+
+        // Cancel the payment intent if it's cancelable
+        if ("requires_capture".equals(paymentIntent.getStatus()) ||
+                "requires_confirmation".equals(paymentIntent.getStatus()) ||
+                "requires_action".equals(paymentIntent.getStatus())) {
+            paymentIntent.cancel();
+            log.info("Cancelled payment intent: {}", paymentIntentId);
+        } else {
+            log.warn("Payment intent {} cannot be cancelled, current status: {}",
+                    paymentIntentId, paymentIntent.getStatus());
+        }
+    }
 }

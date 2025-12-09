@@ -2,19 +2,17 @@ package com.example.adsportalbe.models.payment;
 
 import com.example.adsportalbe.models.ad.Ad;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payment_receipts")
-@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class PaymentReceipt {
 
     @Id
