@@ -351,4 +351,21 @@ public class AdServiceImpl implements AdService {
         // 9. Return the approved ad as AdDetailedViewDto
         return adMapper.toDetailedDto(savedAd);
     }
+
+    @Override
+    @Transactional
+    public Ad save(Ad ad) {
+        return adRepository.save(ad);
+    }
+
+    @Override
+    @Transactional
+    public List<Ad> saveAll(List<Ad> ads) {
+        return adRepository.saveAll(ads);
+    }
+
+    @Override
+    public List<Ad> findAllById(Iterable<Long> ids) {
+        return adRepository.findAllById(ids);
+    }
 }

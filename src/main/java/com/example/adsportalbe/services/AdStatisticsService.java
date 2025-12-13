@@ -1,0 +1,185 @@
+package com.example.adsportalbe.services;
+
+import com.example.adsportalbe.dto.AdImpressionDto;
+import com.example.adsportalbe.enums.AdStatus;
+import com.example.adsportalbe.models.ad.Ad;
+import com.example.adsportalbe.models.ad.AdDailyStatistics;
+import com.example.adsportalbe.models.ad.AdImpression;
+import com.example.adsportalbe.repositories.AdDailyStatisticsRepository;
+import com.example.adsportalbe.repositories.AdImpressionRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AdStatisticsService {
+
+    private static final ZoneId UTC = ZoneId.of("UTC");
+
+    private final AdService adService;
+    private final AdImpressionRepository adImpressionRepository;
+    private final AdDailyStatisticsRepository adDailyStatisticsRepository;
+
+    @Transactional
+    public void processImpressions(List<AdImpressionDto> impressionDtos) {
+        if (impressionDtos == null || impressionDtos.isEmpty()) {
+            log.debug("No impressions to process");
+            return;
+        }
+
+        log.info("Processing {} ad impressions", impressionDtos.size());
+
+        Map<Long, List<AdImpressionDto>> impressionsByAdId = groupImpressionsByAdId(impressionDtos);
+        Set<Long> adIds = impressionsByAdId.keySet();
+        Map<Long, Ad> adsById = fetchAdsAsMap(adIds);
+        Map<DailyStatsKey, AdDailyStatistics> existingDailyStats = fetchExistingDailyStats(impressionsByAdId, adsById);
+
+        List<AdImpression> impressionsToSave = new ArrayList<>();
+        List<AdDailyStatistics> dailyStatsToSave = new ArrayList<>();
+        List<Ad> adsToUpdate = new ArrayList<>();
+
+        impressionsByAdId.forEach((adId, impressions) -> {
+            Ad ad = adsById.get(adId);
+            if (ad == null) {
+                throw new RuntimeException("Ad not found with ID: " + adId);
+            }
+
+            List<AdImpression> newImpressions = buildImpressions(ad, impressions);
+            impressionsToSave.addAll(newImpressions);
+
+            Map<LocalDate, Long> dailyCounts = aggregateDailyCounts(impressions);
+
+            dailyCounts.forEach((date, count) -> {
+                AdDailyStatistics stats = getOrCreateDailyStats(ad, date, existingDailyStats);
+                stats.setViewsCount(stats.getViewsCount() + count);
+                dailyStatsToSave.add(stats);
+            });
+
+            updateAdViewsAndStatus(ad, impressions.size());
+            adsToUpdate.add(ad);
+        });
+
+        batchSave(impressionsToSave, dailyStatsToSave, adsToUpdate);
+
+        log.info("Successfully processed {} impressions across {} ads",
+                impressionDtos.size(), adsById.size());
+    }
+
+    private Map<Long, List<AdImpressionDto>> groupImpressionsByAdId(List<AdImpressionDto> impressions) {
+        return impressions.stream()
+                .collect(Collectors.groupingBy(AdImpressionDto::getAdId));
+    }
+
+    private Map<Long, Ad> fetchAdsAsMap(Set<Long> adIds) {
+        return adService.findAllById(adIds).stream()
+                .collect(Collectors.toMap(Ad::getId, ad -> ad));
+    }
+
+    private Map<DailyStatsKey, AdDailyStatistics> fetchExistingDailyStats(
+            Map<Long, List<AdImpressionDto>> impressionsByAdId,
+            Map<Long, Ad> adsById) {
+
+        Set<DailyStatsKey> keysToFetch = impressionsByAdId.entrySet().stream()
+                .filter(entry -> adsById.containsKey(entry.getKey()))
+                .flatMap(entry -> {
+                    Long adId = entry.getKey();
+                    return entry.getValue().stream()
+                            .map(dto -> toLocalDate(dto.getTimestamp()))
+                            .distinct()
+                            .map(date -> new DailyStatsKey(adId, date));
+                })
+                .collect(Collectors.toSet());
+
+        if (keysToFetch.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Set<Long> adIds = keysToFetch.stream()
+                .map(DailyStatsKey::adId)
+                .collect(Collectors.toSet());
+
+        Set<LocalDate> dates = keysToFetch.stream()
+                .map(DailyStatsKey::date)
+                .collect(Collectors.toSet());
+
+        return adDailyStatisticsRepository.findByAdIdInAndDateIn(adIds, dates).stream()
+                .collect(Collectors.toMap(
+                        stats -> new DailyStatsKey(stats.getAd().getId(), stats.getDate()),
+                        stats -> stats));
+    }
+
+    private List<AdImpression> buildImpressions(Ad ad, List<AdImpressionDto> dtos) {
+        return dtos.stream()
+                .map(dto -> AdImpression.builder()
+                        .ad(ad)
+                        .timestamp(dto.getTimestamp())
+                        .ipAddress(dto.getIpAddress())
+                        .userId(dto.getUserId())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private Map<LocalDate, Long> aggregateDailyCounts(List<AdImpressionDto> impressions) {
+        return impressions.stream()
+                .collect(Collectors.groupingBy(
+                        dto -> toLocalDate(dto.getTimestamp()),
+                        Collectors.counting()));
+    }
+
+    private LocalDate toLocalDate(Instant timestamp) {
+        return timestamp.atZone(UTC).toLocalDate();
+    }
+
+    private AdDailyStatistics getOrCreateDailyStats(
+            Ad ad,
+            LocalDate date,
+            Map<DailyStatsKey, AdDailyStatistics> existingStats) {
+
+        return existingStats.computeIfAbsent(
+                new DailyStatsKey(ad.getId(), date),
+                key -> AdDailyStatistics.builder()
+                        .ad(ad)
+                        .date(date)
+                        .viewsCount(0L)
+                        .build());
+    }
+
+    private void updateAdViewsAndStatus(Ad ad, int newViewsCount) {
+        int currentViews = Optional.ofNullable(ad.getServedViews()).orElse(0);
+        ad.setServedViews(currentViews + newViewsCount);
+
+        if (shouldMarkAsCompleted(ad)) {
+            ad.setStatus(AdStatus.COMPLETED);
+            log.info("Ad {} reached completion threshold ({}/{}). Status updated to COMPLETED.",
+                    ad.getId(), ad.getServedViews(), ad.getTotalViewsBought());
+        }
+    }
+
+    private boolean shouldMarkAsCompleted(Ad ad) {
+        return ad.getStatus() == AdStatus.ACTIVE
+                && ad.getTotalViewsBought() != null
+                && ad.getServedViews() >= ad.getTotalViewsBought();
+    }
+
+    private void batchSave(
+            List<AdImpression> impressions,
+            List<AdDailyStatistics> dailyStats,
+            List<Ad> ads) {
+
+        adImpressionRepository.saveAll(impressions);
+        adDailyStatisticsRepository.saveAll(dailyStats);
+        adService.saveAll(ads);
+    }
+
+    private record DailyStatsKey(Long adId, LocalDate date) {
+    }
+}

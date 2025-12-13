@@ -26,4 +26,10 @@ public interface AdService {
     AdDetailedViewDto rejectAd(Long adId, String rejectionReason) throws StripeException;
 
     AdDetailedViewDto approveAd(Long adId) throws StripeException;
+
+    Ad save(Ad ad);
+
+    List<Ad> saveAll(List<Ad> ads);
+
+    List<Ad> findAllById(Iterable<Long> ids);
 }
