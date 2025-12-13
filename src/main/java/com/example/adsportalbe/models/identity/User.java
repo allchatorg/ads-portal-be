@@ -4,6 +4,7 @@ import com.example.adsportalbe.enums.Role;
 import com.example.adsportalbe.models.Base;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -52,6 +53,12 @@ public class User extends Base implements UserDetails {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @Formula("(select count(a.id) from ads a where a.owner_id = id)")
+    private Long purchasedAdsCount;
+
+    @Formula("(select coalesce(sum(a.total_cost), 0) from ads a where a.owner_id = id)")
+    private Double totalSpent;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -1,12 +1,13 @@
 package com.example.adsportalbe.controllers;
 
 import com.example.adsportalbe.dto.AdminUserDto;
+import com.example.adsportalbe.dto.requests.UserSearchRequestDto;
 import com.example.adsportalbe.services.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,8 +19,8 @@ public class AdminUsersController {
     private final AdminUserService adminUserService;
 
     @GetMapping
-    public ResponseEntity<Page<AdminUserDto>> getUsers(Pageable pageable) {
-        Page<AdminUserDto> result = adminUserService.getAllUsers(pageable);
+    public ResponseEntity<Page<AdminUserDto>> getUsers(@ModelAttribute UserSearchRequestDto request) {
+        Page<AdminUserDto> result = adminUserService.searchUsers(request);
         return ResponseEntity.ok(result);
     }
 

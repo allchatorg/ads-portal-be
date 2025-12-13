@@ -1,27 +1,19 @@
 package com.example.adsportalbe.repositories;
 
 import com.example.adsportalbe.models.identity.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
-
-    @Query("SELECT new com.example.adsportalbe.dto.AdminUserDto(" +
-            "u.id, u.firstName, u.lastName, u.email, u.role, " +
-            "COUNT(a), SUM(a.totalCost), u.createdAt) " +
-            "FROM User u LEFT JOIN Ad a ON a.owner = u " +
-            "GROUP BY u.id")
-    Page<com.example.adsportalbe.dto.AdminUserDto> findAllAdminUsers(Pageable pageable);
 
     @Query("SELECT new com.example.adsportalbe.dto.AdminUserDto(" +
             "u.id, u.firstName, u.lastName, u.email, u.role, " +
