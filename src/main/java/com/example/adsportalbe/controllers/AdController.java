@@ -1,14 +1,16 @@
 package com.example.adsportalbe.controllers;
 
+import com.example.adsportalbe.dto.ServeAdRequestDto;
+import com.example.adsportalbe.dto.ServedAdDto;
 import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
 import com.example.adsportalbe.dto.ad.AdDto;
 import com.example.adsportalbe.dto.ad.AdStatusCountDto;
 import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
 import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.enums.Role;
-import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.services.AdService;
+import com.example.adsportalbe.services.AdStatisticsService;
 import com.example.adsportalbe.services.UserService;
 import com.stripe.exception.StripeException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class AdController {
 
     private final AdService adService;
     private final UserService userService;
+    private final AdStatisticsService adStatisticsService;
 
     @PostMapping
     public ResponseEntity<Void> createAd(@RequestBody CreateAdRequestDto request,
@@ -36,7 +39,7 @@ public class AdController {
             throw new RuntimeException("User not found");
         }
 
-        Ad createdAd = adService.createAd(request, user);
+        adService.createAd(request, user);
         return ResponseEntity.ok().build();
     }
 
@@ -97,5 +100,19 @@ public class AdController {
 
         AdDetailedViewDto result = adService.getAdById(id, user);
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/serve")
+    public ResponseEntity<ServedAdDto> serveAd(@RequestBody ServeAdRequestDto request) {
+        // Optional: validation for request.getUserId() vs authenticated user if needed
+        // But the requirements say "accept a userid" which implies it might be used by
+        // a system or the user itself.
+        // Given the optional IP, I'll pass it through.
+
+        ServedAdDto servedAd = adStatisticsService.serveAd(request.getUserId(), request.getIpAddress());
+        if (servedAd == null) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(servedAd);
     }
 }

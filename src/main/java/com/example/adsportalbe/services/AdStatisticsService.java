@@ -1,6 +1,8 @@
 package com.example.adsportalbe.services;
 
 import com.example.adsportalbe.dto.AdImpressionDto;
+import com.example.adsportalbe.dto.CachedAd;
+import com.example.adsportalbe.dto.ServedAdDto;
 import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.ad.AdDailyStatistics;
@@ -28,6 +30,8 @@ public class AdStatisticsService {
     private final AdService adService;
     private final AdImpressionRepository adImpressionRepository;
     private final AdDailyStatisticsRepository adDailyStatisticsRepository;
+    private final AdCacheService adCacheService;
+    private final AdImpressionCacheService adImpressionCacheService;
 
     @Transactional
     public void processImpressions(List<AdImpressionDto> impressionDtos) {
@@ -178,6 +182,57 @@ public class AdStatisticsService {
         adImpressionRepository.saveAll(impressions);
         adDailyStatisticsRepository.saveAll(dailyStats);
         adService.saveAll(ads);
+    }
+
+    @Transactional
+    public ServedAdDto serveAd(Long userId, String ipAddress) {
+        CachedAd cachedAd = adCacheService.chooseRandomAd();
+        if (cachedAd == null) {
+            log.info("No ads available to serve");
+            return null;
+        }
+
+        // Increment views in cache
+        adCacheService.incrementViewCount(cachedAd.getId());
+
+        // Create and cache impression
+        AdImpressionDto impressionDto = AdImpressionDto.builder()
+                .adId(cachedAd.getId())
+                .userId(userId)
+                .ipAddress(ipAddress)
+                .timestamp(Instant.now())
+                .build();
+        adImpressionCacheService.cacheImpression(impressionDto);
+
+        long totalServed = (cachedAd.getServedViews() != null ? cachedAd.getServedViews() : 0) + 1;
+
+        if (cachedAd.getTotalViewsBought() != null && totalServed >= cachedAd.getTotalViewsBought()) {
+            log.info("Ad {} reached completion threshold ({}). Processing completion...", cachedAd.getId(),
+                    totalServed);
+            completeAd(cachedAd.getId());
+        }
+
+        return ServedAdDto.builder()
+                .id(cachedAd.getId())
+                .title(cachedAd.getTitle())
+                .textContent(cachedAd.getTextContent())
+                .imageUrl(cachedAd.getImageUrl())
+                .videoUrl(cachedAd.getVideoUrl())
+                .format(cachedAd.getFormat() != null ? cachedAd.getFormat().name() : null)
+                .build();
+    }
+
+    private void completeAd(Long adId) {
+        // Retrieve all cached impressions
+        List<AdImpressionDto> impressions = adImpressionCacheService.getCachedImpressions(adId);
+
+        // Persist impressions and update stats
+        processImpressions(impressions);
+
+        // Remove from cache
+        adCacheService.removeAd(adId);
+        adImpressionCacheService.clearCachedImpressions(adId);
+        log.info("Ad {} completion processing finished. Removed from cache.", adId);
     }
 
     private record DailyStatsKey(Long adId, LocalDate date) {

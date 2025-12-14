@@ -14,6 +14,7 @@ import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.models.payment.PaymentReceipt;
 import com.example.adsportalbe.repositories.AdFormatRepository;
 import com.example.adsportalbe.repositories.AdRepository;
+import com.example.adsportalbe.services.AdCacheService;
 import com.example.adsportalbe.services.AdService;
 import com.example.adsportalbe.services.MailService;
 import com.example.adsportalbe.services.PaymentService;
@@ -43,6 +44,7 @@ public class AdServiceImpl implements AdService {
     private final AdFormatRepository adFormatRepository;
     private final PaymentService paymentService;
     private final MailService mailService;
+    private final AdCacheService adCacheService;
     private final AdMapper adMapper;
 
     @Override
@@ -340,7 +342,15 @@ public class AdServiceImpl implements AdService {
         // 7. Save the ad
         Ad savedAd = adRepository.save(ad);
 
-        // 8. Send approval email to ad owner
+        // 8. Push to Cache
+        try {
+            adCacheService.cacheAd(adMapper.toCachedAd(savedAd));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to cache ad " + adId, e);
+            // Don't throw - caching failure shouldn't fail the approval
+        }
+
+        // 9. Send approval email to ad owner
         try {
             mailService.sendAdApprovalEmail(ad.getOwner(), ad.getTitle());
         } catch (Exception e) {
@@ -348,7 +358,7 @@ public class AdServiceImpl implements AdService {
             // Don't throw - approval should still succeed even if email fails
         }
 
-        // 9. Return the approved ad as AdDetailedViewDto
+        // 10. Return the approved ad as AdDetailedViewDto
         return adMapper.toDetailedDto(savedAd);
     }
 

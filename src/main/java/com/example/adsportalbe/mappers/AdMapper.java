@@ -1,5 +1,7 @@
 package com.example.adsportalbe.mappers;
 
+
+import com.example.adsportalbe.dto.CachedAd;
 import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
 import com.example.adsportalbe.dto.ad.AdDto;
 import com.example.adsportalbe.models.ad.Ad;
@@ -32,4 +34,9 @@ public interface AdMapper {
     @Mapping(source = "receipt.cardLast4", target = "cardLast4")
     @Mapping(source = "rejectionReason", target = "rejectionReason")
     AdDetailedViewDto toDetailedDto(Ad ad);
+
+    @Mapping(source = "format.type", target = "format")
+    @Mapping(source = "totalViewsBought", target = "totalViewsBought")
+    @Mapping(source = "servedViews", target = "servedViews")
+    CachedAd toCachedAd(Ad ad);
 }

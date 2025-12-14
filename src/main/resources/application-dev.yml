@@ -1,10 +1,18 @@
 server:
   port: 8081
+logging:
+  level:
+    root: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.servlet: DEBUG
+    org.hibernate: DEBUG
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}å
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -33,7 +41,6 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT}
       password: ${SPRING_DATA_REDIS_PASSWORD}
-      username: ${SPRING_DATA_REDIS_USERNAME}
   servlet:
     multipart:
       max-file-size: 20MB
@@ -52,7 +59,6 @@ app:
   FRONT_END:
     URL: ${APP_FRONTEND_URL}
 
-logging:
   level:
     com.example.adsportalbe: debug
     org.springframework.security: debug
