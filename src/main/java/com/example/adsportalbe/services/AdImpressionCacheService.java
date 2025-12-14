@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdImpressionCacheService {
 
-    private static final String IMPRESSION_KEY_PREFIX = "ad:impression:";
+    private static final String GLOBAL_IMPRESSION_KEY = "ad:impression:global";
     private final RedisTemplate<String, Object> redisTemplate;
     private final AdImpressionRepository adImpressionRepository;
     private final AdService adService;
@@ -36,24 +36,46 @@ public class AdImpressionCacheService {
             return;
         }
 
-        String key = IMPRESSION_KEY_PREFIX + impressionDto.getAdId();
-        redisTemplate.opsForList().rightPush(key, impressionDto);
+        redisTemplate.opsForList().rightPush(GLOBAL_IMPRESSION_KEY, impressionDto);
         log.debug("Cached impression for ad ID: {}", impressionDto.getAdId());
     }
 
     /**
-     * Retrieves all cached impressions for a specific ad.
+     * Pops all impressions from the global queue atomically.
      *
-     * @param adId the ID of the ad
-     * @return list of cached ad impression DTOs
+     * @return list of all pending ad impression DTOs
      */
-    public List<AdImpressionDto> getCachedImpressions(Long adId) {
-        if (adId == null) {
+    public List<AdImpressionDto> popAllImpressions() {
+        // We simply retrieve everything and delete the key.
+        // This is safe because LPOP/DEL combination is not strictly atomic unless in a
+        // transaction,
+        // but since we want "ALL current items", we can use MULTI/EXEC or just accept
+        // that
+        // between RANGE and DEL more items might come in.
+        // A better approach for "drain queue" pattern without lua:
+        // Use RENAME to move to a temp key, then read from temp key.
+        // Or simpler for this scope: Just read all and delete.
+        // CAUTION: If we read, then new item comes, then delete -> we lose the new
+        // item.
+        // To be safe, we should use getAndSet logic or RENAME.
+        // Let's use RENAME to a processing key pattern to be robust.
+
+        String processingKey = GLOBAL_IMPRESSION_KEY + ":processing:" + System.currentTimeMillis();
+
+        try {
+            // Rename the key. If key doesn't exist (no impressions), this throws an error
+            // or returns false.
+            if (Boolean.FALSE.equals(redisTemplate.hasKey(GLOBAL_IMPRESSION_KEY))) {
+                return List.of();
+            }
+            redisTemplate.rename(GLOBAL_IMPRESSION_KEY, processingKey);
+        } catch (Exception e) {
+            // Likely key didn't exist or race condition
             return List.of();
         }
 
-        String key = IMPRESSION_KEY_PREFIX + adId;
-        List<Object> objects = redisTemplate.opsForList().range(key, 0, -1);
+        List<Object> objects = redisTemplate.opsForList().range(processingKey, 0, -1);
+        redisTemplate.delete(processingKey);
 
         if (objects == null) {
             return List.of();
@@ -63,20 +85,6 @@ public class AdImpressionCacheService {
                 .filter(obj -> obj instanceof AdImpressionDto)
                 .map(obj -> (AdImpressionDto) obj)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * Clears cached impressions for a specific ad.
-     *
-     * @param adId the ID of the ad
-     */
-    public void clearCachedImpressions(Long adId) {
-        if (adId == null) {
-            return;
-        }
-        String key = IMPRESSION_KEY_PREFIX + adId;
-        redisTemplate.delete(key);
-        log.info("Cleared cached impressions for ad ID: {}", adId);
     }
 
     /**

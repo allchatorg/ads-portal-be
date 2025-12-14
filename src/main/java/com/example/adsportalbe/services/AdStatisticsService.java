@@ -223,16 +223,9 @@ public class AdStatisticsService {
     }
 
     private void completeAd(Long adId) {
-        // Retrieve all cached impressions
-        List<AdImpressionDto> impressions = adImpressionCacheService.getCachedImpressions(adId);
-
-        // Persist impressions and update stats
-        processImpressions(impressions);
-
-        // Remove from cache
+        // Remove from cache to stop serving
         adCacheService.removeAd(adId);
-        adImpressionCacheService.clearCachedImpressions(adId);
-        log.info("Ad {} completion processing finished. Removed from cache.", adId);
+        log.info("Ad {} reached completion threshold. Removed from cache. Stats will be processed by cron job.", adId);
     }
 
     private record DailyStatsKey(Long adId, LocalDate date) {
