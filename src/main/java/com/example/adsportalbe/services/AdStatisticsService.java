@@ -78,6 +78,62 @@ public class AdStatisticsService {
                 impressionDtos.size(), adsById.size());
     }
 
+    /**
+     * Processes impressions for a single ad.
+     *
+     * @param adId           the ID of the ad
+     * @param impressionDtos list of impressions for this ad
+     */
+    @Transactional
+    public void processImpressionsForAd(Long adId, List<AdImpressionDto> impressionDtos) {
+        if (adId == null || impressionDtos == null || impressionDtos.isEmpty()) {
+            log.debug("No impressions to process for ad ID: {}", adId);
+            return;
+        }
+
+        log.info("Processing {} impressions for ad ID: {}", impressionDtos.size(), adId);
+
+        // Fetch the ad
+        List<Ad> ads = adService.findAllById(List.of(adId));
+        if (ads.isEmpty()) {
+            log.error("Ad not found with ID: {}", adId);
+            return;
+        }
+        Ad ad = ads.get(0);
+
+        // Fetch existing daily stats for this ad
+        Set<LocalDate> dates = impressionDtos.stream()
+                .map(dto -> toLocalDate(dto.getTimestamp()))
+                .collect(Collectors.toSet());
+
+        Map<DailyStatsKey, AdDailyStatistics> existingDailyStats = adDailyStatisticsRepository
+                .findByAdIdInAndDateIn(Set.of(adId), dates).stream()
+                .collect(Collectors.toMap(
+                        stats -> new DailyStatsKey(stats.getAd().getId(), stats.getDate()),
+                        stats -> stats));
+
+        // Build impressions
+        List<AdImpression> impressionsToSave = buildImpressions(ad, impressionDtos);
+
+        // Aggregate daily counts and update stats
+        List<AdDailyStatistics> dailyStatsToSave = new ArrayList<>();
+        Map<LocalDate, Long> dailyCounts = aggregateDailyCounts(impressionDtos);
+
+        dailyCounts.forEach((date, count) -> {
+            AdDailyStatistics stats = getOrCreateDailyStats(ad, date, existingDailyStats);
+            stats.setViewsCount(stats.getViewsCount() + count);
+            dailyStatsToSave.add(stats);
+        });
+
+        // Update ad views and status
+        updateAdViewsAndStatus(ad, impressionDtos.size());
+
+        // Save everything
+        batchSave(impressionsToSave, dailyStatsToSave, List.of(ad));
+
+        log.info("Successfully processed {} impressions for ad ID: {}", impressionDtos.size(), adId);
+    }
+
     private Map<Long, List<AdImpressionDto>> groupImpressionsByAdId(List<AdImpressionDto> impressions) {
         return impressions.stream()
                 .collect(Collectors.groupingBy(AdImpressionDto::getAdId));
@@ -207,8 +263,6 @@ public class AdStatisticsService {
         long totalServed = (cachedAd.getServedViews() != null ? cachedAd.getServedViews() : 0) + 1;
 
         if (cachedAd.getTotalViewsBought() != null && totalServed >= cachedAd.getTotalViewsBought()) {
-            log.info("Ad {} reached completion threshold ({}). Processing completion...", cachedAd.getId(),
-                    totalServed);
             completeAd(cachedAd.getId());
         }
 
@@ -225,7 +279,16 @@ public class AdStatisticsService {
     private void completeAd(Long adId) {
         // Remove from cache to stop serving
         adCacheService.removeAd(adId);
-        log.info("Ad {} reached completion threshold. Removed from cache. Stats will be processed by cron job.", adId);
+
+        // Pop and process impressions immediately
+        List<AdImpressionDto> impressions = adImpressionCacheService.popImpressionsByAdId(adId);
+        if (!impressions.isEmpty()) {
+            processImpressionsForAd(adId, impressions);
+            log.info("Ad {} reached completion threshold. Removed from cache and processed {} impressions immediately.",
+                    adId, impressions.size());
+        } else {
+            log.info("Ad {} reached completion threshold. Removed from cache. No cached impressions to process.", adId);
+        }
     }
 
     private record DailyStatsKey(Long adId, LocalDate date) {

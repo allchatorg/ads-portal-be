@@ -1,6 +1,7 @@
 package com.example.adsportalbe.jobs;
 
 import com.example.adsportalbe.dto.AdImpressionDto;
+import com.example.adsportalbe.services.AdCacheService;
 import com.example.adsportalbe.services.AdImpressionCacheService;
 import com.example.adsportalbe.services.AdStatisticsService;
 import lombok.RequiredArgsConstructor;
@@ -9,12 +10,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class AdImpressionProcessingJob {
 
+    private final AdCacheService adCacheService;
     private final AdImpressionCacheService adImpressionCacheService;
     private final AdStatisticsService adStatisticsService;
 
@@ -22,21 +25,29 @@ public class AdImpressionProcessingJob {
     public void processImpressionsFromCache() {
         log.trace("Starting scheduled ad impression processing");
 
-        List<AdImpressionDto> impressions = adImpressionCacheService.popAllImpressions();
+        Set<Long> activeAdIds = adCacheService.getAllActiveAdIds();
 
-        if (impressions.isEmpty()) {
+        if (activeAdIds.isEmpty()) {
+            log.trace("No active ads in cache");
             return;
         }
 
-        log.info("Cron job retrieved {} impressions from cache", impressions.size());
+        log.debug("Processing impressions for {} active ads", activeAdIds.size());
 
-        try {
-            adStatisticsService.processImpressions(impressions);
-        } catch (Exception e) {
-            log.error("Failed to process impressions from cron job", e);
-            // In a real production system, we might want to push these back to Redis
-            // or a dead letter queue to avoid data loss.
-            // For now, we log the error.
+        for (Long adId : activeAdIds) {
+            try {
+                List<AdImpressionDto> impressions = adImpressionCacheService.popImpressionsByAdId(adId);
+
+                if (impressions.isEmpty()) {
+                    continue;
+                }
+
+                log.info("Processing {} impressions for ad ID: {}", impressions.size(), adId);
+                adStatisticsService.processImpressionsForAd(adId, impressions);
+            } catch (Exception e) {
+                log.error("Failed to process impressions for ad ID: {}", adId, e);
+                // Continue processing other ads even if one fails
+            }
         }
     }
 }

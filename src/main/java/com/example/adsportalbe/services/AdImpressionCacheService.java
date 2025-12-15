@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class AdImpressionCacheService {
 
     private static final String GLOBAL_IMPRESSION_KEY = "ad:impression:global";
+    private static final String AD_IMPRESSION_KEY_PREFIX = "ad:impression:";
     private final RedisTemplate<String, Object> redisTemplate;
     private final AdImpressionRepository adImpressionRepository;
     private final AdService adService;
@@ -36,7 +37,8 @@ public class AdImpressionCacheService {
             return;
         }
 
-        redisTemplate.opsForList().rightPush(GLOBAL_IMPRESSION_KEY, impressionDto);
+        String adImpressionKey = AD_IMPRESSION_KEY_PREFIX + impressionDto.getAdId();
+        redisTemplate.opsForList().rightPush(adImpressionKey, impressionDto);
         log.debug("Cached impression for ad ID: {}", impressionDto.getAdId());
     }
 
@@ -71,6 +73,43 @@ public class AdImpressionCacheService {
             redisTemplate.rename(GLOBAL_IMPRESSION_KEY, processingKey);
         } catch (Exception e) {
             // Likely key didn't exist or race condition
+            return List.of();
+        }
+
+        List<Object> objects = redisTemplate.opsForList().range(processingKey, 0, -1);
+        redisTemplate.delete(processingKey);
+
+        if (objects == null) {
+            return List.of();
+        }
+
+        return objects.stream()
+                .filter(obj -> obj instanceof AdImpressionDto)
+                .map(obj -> (AdImpressionDto) obj)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Pops all impressions for a specific ad atomically.
+     *
+     * @param adId the ID of the ad
+     * @return list of ad impression DTOs for the given ad
+     */
+    public List<AdImpressionDto> popImpressionsByAdId(Long adId) {
+        if (adId == null) {
+            return List.of();
+        }
+
+        String adImpressionKey = AD_IMPRESSION_KEY_PREFIX + adId;
+        String processingKey = adImpressionKey + ":processing:" + System.currentTimeMillis();
+
+        try {
+            if (Boolean.FALSE.equals(redisTemplate.hasKey(adImpressionKey))) {
+                return List.of();
+            }
+            redisTemplate.rename(adImpressionKey, processingKey);
+        } catch (Exception e) {
+            log.debug("No impressions to pop for ad ID: {}", adId);
             return List.of();
         }
 

@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -38,9 +40,13 @@ public class AdCacheService {
             return;
 
         String detailsKey = AD_DETAILS_KEY_PREFIX + adId;
+        String viewsKey = AD_VIEWS_KEY_PREFIX + adId;
 
         // Remove details
         redisTemplate.delete(detailsKey);
+
+        // Remove view count
+        redisTemplate.delete(viewsKey);
 
         // Remove from set
         redisTemplate.opsForSet().remove(AD_ACTIVE_SET_KEY, adId.toString());
@@ -111,5 +117,29 @@ public class AdCacheService {
             }
         }
         return 0;
+    }
+
+    /**
+     * Retrieves all active ad IDs from the cache.
+     *
+     * @return set of all active ad IDs
+     */
+    public Set<Long> getAllActiveAdIds() {
+        Set<Object> members = redisTemplate.opsForSet().members(AD_ACTIVE_SET_KEY);
+        if (members == null || members.isEmpty()) {
+            return Set.of();
+        }
+
+        return members.stream()
+                .map(obj -> {
+                    try {
+                        return Long.parseLong(obj.toString());
+                    } catch (NumberFormatException e) {
+                        log.warn("Could not parse ad ID from cache: {}", obj);
+                        return null;
+                    }
+                })
+                .filter(id -> id != null)
+                .collect(java.util.stream.Collectors.toSet());
     }
 }
