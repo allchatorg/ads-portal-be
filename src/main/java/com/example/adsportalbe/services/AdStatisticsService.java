@@ -3,6 +3,7 @@ package com.example.adsportalbe.services;
 import com.example.adsportalbe.dto.AdImpressionDto;
 import com.example.adsportalbe.dto.CachedAd;
 import com.example.adsportalbe.dto.ServedAdDto;
+import com.example.adsportalbe.dto.ad.AdDailyStatsResponseDto;
 import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.ad.AdDailyStatistics;
@@ -289,6 +290,55 @@ public class AdStatisticsService {
         } else {
             log.info("Ad {} reached completion threshold. Removed from cache. No cached impressions to process.", adId);
         }
+    }
+
+    /**
+     * Retrieves daily statistics for an ad.
+     *
+     * @param adId     the ID of the ad
+     * @param fromDate optional date from which to retrieve stats (inclusive)
+     * @return AdDailyStatsResponseDto containing daily stats, today's views,
+     * viewsBought, and servedViews
+     */
+    public AdDailyStatsResponseDto getAdDailyStats(Long adId, LocalDate fromDate) {
+        // Fetch the ad
+        List<Ad> ads = adService.findAllById(List.of(adId));
+        if (ads.isEmpty()) {
+            throw new RuntimeException("Ad not found with ID: " + adId);
+        }
+        Ad ad = ads.get(0);
+
+        // Fetch daily statistics based on whether fromDate is provided
+        List<AdDailyStatistics> dailyStatistics;
+        if (fromDate != null) {
+            dailyStatistics = adDailyStatisticsRepository.findByAdIdAndDateFrom(adId, fromDate);
+        } else {
+            dailyStatistics = adDailyStatisticsRepository.findByAdIdOrderByDateDesc(adId);
+        }
+
+        // Calculate today's views
+        LocalDate today = LocalDate.now(UTC);
+        Long todaysViews = dailyStatistics.stream()
+                .filter(stat -> stat.getDate().equals(today))
+                .map(AdDailyStatistics::getViewsCount)
+                .findFirst()
+                .orElse(0L);
+
+        // Map to DTOs
+        List<AdDailyStatsResponseDto.DailyStatDto> dailyStatDtos = dailyStatistics.stream()
+                .map(stat -> AdDailyStatsResponseDto.DailyStatDto.builder()
+                        .date(stat.getDate())
+                        .viewsCount(stat.getViewsCount())
+                        .build())
+                .toList();
+
+        return AdDailyStatsResponseDto.builder()
+                .adId(adId)
+                .viewsBought(ad.getTotalViewsBought())
+                .servedViews(ad.getServedViews())
+                .todaysViews(todaysViews)
+                .dailyStats(dailyStatDtos)
+                .build();
     }
 
     private record DailyStatsKey(Long adId, LocalDate date) {

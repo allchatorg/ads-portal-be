@@ -2,10 +2,7 @@ package com.example.adsportalbe.controllers;
 
 import com.example.adsportalbe.dto.ServeAdRequestDto;
 import com.example.adsportalbe.dto.ServedAdDto;
-import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
-import com.example.adsportalbe.dto.ad.AdDto;
-import com.example.adsportalbe.dto.ad.AdStatusCountDto;
-import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
+import com.example.adsportalbe.dto.ad.*;
 import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.enums.Role;
 import com.example.adsportalbe.models.identity.User;
@@ -15,11 +12,13 @@ import com.example.adsportalbe.services.UserService;
 import com.stripe.exception.StripeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -114,5 +113,19 @@ public class AdController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(servedAd);
+    }
+
+    @GetMapping("/{id}/daily-stats")
+    public ResponseEntity<AdDailyStatsResponseDto> getAdDailyStats(
+            @PathVariable Long id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByEmail(userDetails.getUsername());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        AdDailyStatsResponseDto result = adStatisticsService.getAdDailyStats(id, fromDate);
+        return ResponseEntity.ok(result);
     }
 }

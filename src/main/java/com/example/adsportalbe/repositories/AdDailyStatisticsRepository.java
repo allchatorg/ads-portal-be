@@ -18,4 +18,9 @@ public interface AdDailyStatisticsRepository extends JpaRepository<AdDailyStatis
     @Query("SELECT ads FROM AdDailyStatistics ads WHERE ads.ad.id IN :adIds AND ads.date IN :dates")
     List<AdDailyStatistics> findByAdIdInAndDateIn(@Param("adIds") Set<Long> adIds,
                                                   @Param("dates") Set<LocalDate> dates);
+
+    List<AdDailyStatistics> findByAdIdOrderByDateDesc(Long adId);
+
+    @Query("SELECT ads FROM AdDailyStatistics ads WHERE ads.ad.id = :adId AND ads.date >= :fromDate ORDER BY ads.date DESC")
+    List<AdDailyStatistics> findByAdIdAndDateFrom(@Param("adId") Long adId, @Param("fromDate") LocalDate fromDate);
 }
