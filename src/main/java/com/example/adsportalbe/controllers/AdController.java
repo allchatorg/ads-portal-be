@@ -125,7 +125,7 @@ public class AdController {
             throw new RuntimeException("User not found");
         }
 
-        AdDailyStatsResponseDto result = adStatisticsService.getAdDailyStats(id, fromDate);
+        AdDailyStatsResponseDto result = adStatisticsService.getAdDailyStats(id, fromDate, user);
         return ResponseEntity.ok(result);
     }
 }

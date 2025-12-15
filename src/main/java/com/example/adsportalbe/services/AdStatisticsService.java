@@ -8,6 +8,7 @@ import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.ad.AdDailyStatistics;
 import com.example.adsportalbe.models.ad.AdImpression;
+import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.repositories.AdDailyStatisticsRepository;
 import com.example.adsportalbe.repositories.AdImpressionRepository;
 import lombok.RequiredArgsConstructor;
@@ -297,16 +298,22 @@ public class AdStatisticsService {
      *
      * @param adId     the ID of the ad
      * @param fromDate optional date from which to retrieve stats (inclusive)
+     * @param user     the user requesting the stats
      * @return AdDailyStatsResponseDto containing daily stats, today's views,
      * viewsBought, and servedViews
      */
-    public AdDailyStatsResponseDto getAdDailyStats(Long adId, LocalDate fromDate) {
+    public AdDailyStatsResponseDto getAdDailyStats(Long adId, LocalDate fromDate, User user) {
         // Fetch the ad
         List<Ad> ads = adService.findAllById(List.of(adId));
         if (ads.isEmpty()) {
             throw new RuntimeException("Ad not found with ID: " + adId);
         }
         Ad ad = ads.get(0);
+
+        // Check ownership
+        if (user.getRole() != com.example.adsportalbe.enums.Role.ADMIN && !ad.getOwner().getId().equals(user.getId())) {
+            throw new RuntimeException("You do not have permission to view stats for this ad.");
+        }
 
         // Fetch daily statistics based on whether fromDate is provided
         List<AdDailyStatistics> dailyStatistics;
