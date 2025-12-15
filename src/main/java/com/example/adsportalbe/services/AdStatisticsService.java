@@ -4,6 +4,8 @@ import com.example.adsportalbe.dto.AdImpressionDto;
 import com.example.adsportalbe.dto.CachedAd;
 import com.example.adsportalbe.dto.ServedAdDto;
 import com.example.adsportalbe.dto.ad.AdDailyStatsResponseDto;
+import com.example.adsportalbe.dto.ad.UserAdViewsDailyBreakdownDto;
+import com.example.adsportalbe.dto.ad.UserAdViewsSummaryDto;
 import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.ad.AdDailyStatistics;
@@ -345,6 +347,91 @@ public class AdStatisticsService {
                 .servedViews(ad.getServedViews())
                 .todaysViews(todaysViews)
                 .dailyStats(dailyStatDtos)
+                .build();
+    }
+
+    /**
+     * Gets a summary of the user's ad views including today's views, yesterday's
+     * views,
+     * total views bought across all ads, and total served views across all ads.
+     *
+     * @param user the user to get stats for
+     * @return UserAdViewsSummaryDto containing aggregated stats
+     */
+    public UserAdViewsSummaryDto getUserAdViewsSummary(User user) {
+        LocalDate today = LocalDate.now(UTC);
+        LocalDate yesterday = today.minusDays(1);
+
+        // Fetch daily stats for today and yesterday for the user's ads
+        List<AdDailyStatistics> dailyStats = adDailyStatisticsRepository
+                .findByOwnerIdAndDateIn(user.getId(), Set.of(today, yesterday));
+
+        Long todaysViews = dailyStats.stream()
+                .filter(stat -> stat.getDate().equals(today))
+                .mapToLong(AdDailyStatistics::getViewsCount)
+                .sum();
+
+        Long yesterdaysViews = dailyStats.stream()
+                .filter(stat -> stat.getDate().equals(yesterday))
+                .mapToLong(AdDailyStatistics::getViewsCount)
+                .sum();
+
+        // Fetch all user's ads to sum up total views bought and served views
+        List<Ad> userAds = adService.findAllByOwnerId(user.getId());
+
+        Integer totalViewsBought = userAds.stream()
+                .map(Ad::getTotalViewsBought)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        Integer totalServedViews = userAds.stream()
+                .map(Ad::getServedViews)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        return UserAdViewsSummaryDto.builder()
+                .todaysViews(todaysViews)
+                .yesterdaysViews(yesterdaysViews)
+                .totalViewsBought(totalViewsBought)
+                .totalServedViews(totalServedViews)
+                .build();
+    }
+
+    /**
+     * Gets a day-by-day breakdown of total views for all of the user's ads.
+     *
+     * @param user     the user to get stats for
+     * @param fromDate optional date to filter from (inclusive)
+     * @return UserAdViewsDailyBreakdownDto containing daily breakdown
+     */
+    public UserAdViewsDailyBreakdownDto getUserAdViewsDailyBreakdown(User user, LocalDate fromDate) {
+        List<AdDailyStatistics> dailyStats;
+
+        if (fromDate != null) {
+            dailyStats = adDailyStatisticsRepository.findByOwnerIdAndDateFrom(user.getId(), fromDate);
+        } else {
+            dailyStats = adDailyStatisticsRepository.findByOwnerIdOrderByDateDesc(user.getId());
+        }
+
+        // Aggregate views by date across all ads
+        Map<LocalDate, Long> viewsByDate = dailyStats.stream()
+                .collect(Collectors.groupingBy(
+                        AdDailyStatistics::getDate,
+                        Collectors.summingLong(AdDailyStatistics::getViewsCount)));
+
+        // Convert to list of DailyViewStats, sorted by date descending
+        List<UserAdViewsDailyBreakdownDto.DailyViewStats> dailyViewStats = viewsByDate.entrySet().stream()
+                .sorted(Map.Entry.<LocalDate, Long>comparingByKey().reversed())
+                .map(entry -> UserAdViewsDailyBreakdownDto.DailyViewStats.builder()
+                        .date(entry.getKey())
+                        .viewsCount(entry.getValue())
+                        .build())
+                .toList();
+
+        return UserAdViewsDailyBreakdownDto.builder()
+                .dailyViews(dailyViewStats)
                 .build();
     }
 

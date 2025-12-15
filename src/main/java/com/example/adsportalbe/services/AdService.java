@@ -32,4 +32,6 @@ public interface AdService {
     List<Ad> saveAll(List<Ad> ads);
 
     List<Ad> findAllById(Iterable<Long> ids);
+
+    List<Ad> findAllByOwnerId(Long ownerId);
 }

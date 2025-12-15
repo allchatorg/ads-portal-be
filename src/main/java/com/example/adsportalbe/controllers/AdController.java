@@ -128,4 +128,38 @@ public class AdController {
         AdDailyStatsResponseDto result = adStatisticsService.getAdDailyStats(id, fromDate, user);
         return ResponseEntity.ok(result);
     }
+
+    /**
+     * Gets a summary of the authenticated user's ad views including today's views,
+     * yesterday's views, total views bought, and total served views across all ads.
+     */
+    @GetMapping("/my-stats/summary")
+    public ResponseEntity<UserAdViewsSummaryDto> getUserAdViewsSummary(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByEmail(userDetails.getUsername());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        UserAdViewsSummaryDto result = adStatisticsService.getUserAdViewsSummary(user);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Gets a day-by-day breakdown of total views for all of the authenticated
+     * user's ads.
+     * Optionally filtered by fromDate.
+     */
+    @GetMapping("/my-stats/daily")
+    public ResponseEntity<UserAdViewsDailyBreakdownDto> getUserAdViewsDailyBreakdown(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByEmail(userDetails.getUsername());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        UserAdViewsDailyBreakdownDto result = adStatisticsService.getUserAdViewsDailyBreakdown(user, fromDate);
+        return ResponseEntity.ok(result);
+    }
 }

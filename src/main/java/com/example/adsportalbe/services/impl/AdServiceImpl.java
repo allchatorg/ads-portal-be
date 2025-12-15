@@ -378,4 +378,9 @@ public class AdServiceImpl implements AdService {
     public List<Ad> findAllById(Iterable<Long> ids) {
         return adRepository.findAllById(ids);
     }
+
+    @Override
+    public List<Ad> findAllByOwnerId(Long ownerId) {
+        return adRepository.findAllByOwnerId(ownerId);
+    }
 }

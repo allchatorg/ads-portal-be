@@ -18,4 +18,6 @@ public interface AdRepository extends JpaRepository<Ad, Long>, JpaSpecificationE
 
     @Query("SELECT new com.example.adsportalbe.dto.ad.AdStatusCountDto(a.status, COUNT(a)) FROM Ad a WHERE a.owner.id = :userId GROUP BY a.status")
     List<AdStatusCountDto> getAdStatusCountsByUserId(@Param("userId") Long userId);
+
+    List<Ad> findAllByOwnerId(Long ownerId);
 }
