@@ -17,6 +17,7 @@ public class AdDailyStatsResponseDto {
     private Integer viewsBought;
     private Integer servedViews;
     private Long todaysViews;
+    private Long yesterdaysViews;
     private List<DailyStatDto> dailyStats;
 
     @Data

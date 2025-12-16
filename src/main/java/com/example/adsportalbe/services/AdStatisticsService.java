@@ -302,7 +302,7 @@ public class AdStatisticsService {
      * @param fromDate optional date from which to retrieve stats (inclusive)
      * @param user     the user requesting the stats
      * @return AdDailyStatsResponseDto containing daily stats, today's views,
-     * viewsBought, and servedViews
+     * yesterday's views, viewsBought, and servedViews
      */
     public AdDailyStatsResponseDto getAdDailyStats(Long adId, LocalDate fromDate, User user) {
         // Fetch the ad
@@ -333,6 +333,14 @@ public class AdStatisticsService {
                 .findFirst()
                 .orElse(0L);
 
+        // Calculate yesterday's views
+        LocalDate yesterday = today.minusDays(1);
+        Long yesterdaysViews = dailyStatistics.stream()
+                .filter(stat -> stat.getDate().equals(yesterday))
+                .map(AdDailyStatistics::getViewsCount)
+                .findFirst()
+                .orElse(0L);
+
         // Map to DTOs
         List<AdDailyStatsResponseDto.DailyStatDto> dailyStatDtos = dailyStatistics.stream()
                 .map(stat -> AdDailyStatsResponseDto.DailyStatDto.builder()
@@ -346,6 +354,7 @@ public class AdStatisticsService {
                 .viewsBought(ad.getTotalViewsBought())
                 .servedViews(ad.getServedViews())
                 .todaysViews(todaysViews)
+                .yesterdaysViews(yesterdaysViews)
                 .dailyStats(dailyStatDtos)
                 .build();
     }
