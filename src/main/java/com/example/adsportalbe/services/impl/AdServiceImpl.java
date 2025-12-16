@@ -443,4 +443,82 @@ public class AdServiceImpl implements AdService {
                 .yesterdayRevenue(yesterdayRevenue != null ? yesterdayRevenue : 0.0)
                 .build();
     }
+
+    @Override
+    public MonthlyRevenueResponseDto getMonthlyRevenueStats() {
+        int currentYear = LocalDate.now().getYear();
+
+        // Fetch monthly revenue from repository
+        List<Object[]> monthlyData = paymentReceiptRepository.findMonthlyRevenue(currentYear);
+
+        // Create a map for easy lookup
+        Map<Integer, Double> revenueByMonth = monthlyData.stream()
+                .collect(Collectors.toMap(
+                        row -> ((Number) row[0]).intValue(), // month number
+                        row -> row[1] != null ? ((Number) row[1]).doubleValue() : 0.0 // revenue
+                ));
+
+        // Month abbreviations
+        String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+        // Build data for all 12 months
+        List<MonthlyRevenueDto> data = new ArrayList<>();
+        for (int i = 1; i <= 12; i++) {
+            data.add(MonthlyRevenueDto.builder()
+                    .month(monthNames[i - 1])
+                    .revenue(revenueByMonth.getOrDefault(i, 0.0))
+                    .build());
+        }
+
+        return MonthlyRevenueResponseDto.builder()
+                .data(data)
+                .build();
+    }
+
+    @Override
+    public WeeklyRevenueResponseDto getWeeklyRevenueStats() {
+        LocalDate today = LocalDate.now();
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        // Calculate start of the last 7 days (including today)
+        LocalDate startDate = today.minusDays(6);
+        Instant startInstant = startDate.atStartOfDay(zoneId).toInstant();
+        Instant endInstant = today.plusDays(1).atStartOfDay(zoneId).toInstant();
+
+        // Fetch daily revenue from repository
+        List<Object[]> dailyData = paymentReceiptRepository.findDailyRevenueForDateRange(startInstant, endInstant);
+
+        // Create a map for easy lookup by LocalDate
+        Map<LocalDate, Double> revenueByDate = dailyData.stream()
+                .collect(Collectors.toMap(
+                        row -> {
+                            if (row[0] instanceof java.sql.Date) {
+                                return ((java.sql.Date) row[0]).toLocalDate();
+                            } else if (row[0] instanceof LocalDate) {
+                                return (LocalDate) row[0];
+                            }
+                            return null;
+                        },
+                        row -> row[1] != null ? ((Number) row[1]).doubleValue() : 0.0));
+
+        // Day abbreviations in order (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+        String[] dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
+        // Build data for the last 7 days
+        List<WeeklyRevenueDto> data = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = startDate.plusDays(i);
+            int dayOfWeek = date.getDayOfWeek().getValue(); // 1 (Monday) to 7 (Sunday)
+
+            data.add(WeeklyRevenueDto.builder()
+                    .day(dayNames[dayOfWeek - 1])
+                    .revenue(revenueByDate.getOrDefault(date, 0.0))
+                    .build());
+        }
+
+        return WeeklyRevenueResponseDto.builder()
+                .data(data)
+                .build();
+    }
 }

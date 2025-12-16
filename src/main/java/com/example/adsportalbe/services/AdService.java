@@ -27,6 +27,10 @@ public interface AdService {
 
     RevenueDto getDailyRevenueStats();
 
+    MonthlyRevenueResponseDto getMonthlyRevenueStats();
+
+    WeeklyRevenueResponseDto getWeeklyRevenueStats();
+
     Ad save(Ad ad);
 
     List<Ad> saveAll(List<Ad> ads);

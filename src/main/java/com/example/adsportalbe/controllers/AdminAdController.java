@@ -50,6 +50,18 @@ public class AdminAdController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/revenue/monthly")
+    public ResponseEntity<MonthlyRevenueResponseDto> getMonthlyRevenue() {
+        MonthlyRevenueResponseDto result = adService.getMonthlyRevenueStats();
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/revenue/weekly")
+    public ResponseEntity<WeeklyRevenueResponseDto> getWeeklyRevenue() {
+        WeeklyRevenueResponseDto result = adService.getWeeklyRevenueStats();
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<AdDetailedViewDto> getAdById(@PathVariable Long id,
                                                        @AuthenticationPrincipal UserDetails userDetails) {
