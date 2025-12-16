@@ -37,6 +37,12 @@ public class AdminAdController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/status-counts/{userId}")
+    public ResponseEntity<List<AdStatusCountDto>> getAdStatusCountsByUserId(@PathVariable Long userId) {
+        List<AdStatusCountDto> result = adService.getAdStatusCountsByUserId(userId);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/purchased-counts")
     public ResponseEntity<PurchasedAdsDailyCountDto> getPurchasedAdsCounts(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate) {
@@ -64,7 +70,7 @@ public class AdminAdController {
 
     @GetMapping("/{id}")
     public ResponseEntity<AdDetailedViewDto> getAdById(@PathVariable Long id,
-                                                       @AuthenticationPrincipal UserDetails userDetails) {
+            @AuthenticationPrincipal UserDetails userDetails) {
         User user = userService.findByEmail(userDetails.getUsername());
         if (user == null) {
             throw new RuntimeException("User not found");
