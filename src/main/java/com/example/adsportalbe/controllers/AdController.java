@@ -76,6 +76,18 @@ public class AdController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<AdDetailedViewDto> getAdById(@PathVariable Long id,
+                                                       @AuthenticationPrincipal UserDetails userDetails) {
+        User user = userService.findByEmail(userDetails.getUsername());
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        AdDetailedViewDto result = adService.getAdById(id, user);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/status-counts-by-user")
     public ResponseEntity<List<AdStatusCountDto>> getAdStatusCountsByUserId(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -86,18 +98,6 @@ public class AdController {
         Long userId = user.getId();
         List<AdStatusCountDto> result = adService.getAdStatusCountsByUserId(userId);
 
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<AdDetailedViewDto> getAdById(@PathVariable Long id,
-                                                       @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userService.findByEmail(userDetails.getUsername());
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
-
-        AdDetailedViewDto result = adService.getAdById(id, user);
         return ResponseEntity.ok(result);
     }
 

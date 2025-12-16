@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -20,4 +21,7 @@ public interface AdRepository extends JpaRepository<Ad, Long>, JpaSpecificationE
     List<AdStatusCountDto> getAdStatusCountsByUserId(@Param("userId") Long userId);
 
     List<Ad> findAllByOwnerId(Long ownerId);
+
+    @Query("SELECT a FROM Ad a WHERE a.approvedAt IS NOT NULL AND a.approvedAt >= :fromDate AND a.approvedAt <= :toDate ORDER BY a.approvedAt ASC")
+    List<Ad> findApprovedAdsBetweenDates(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate);
 }

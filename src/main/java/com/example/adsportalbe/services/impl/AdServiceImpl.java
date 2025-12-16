@@ -1,9 +1,6 @@
 package com.example.adsportalbe.services.impl;
 
-import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
-import com.example.adsportalbe.dto.ad.AdDto;
-import com.example.adsportalbe.dto.ad.AdStatusCountDto;
-import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
+import com.example.adsportalbe.dto.ad.*;
 import com.example.adsportalbe.dto.payment.PaymentMethodDto;
 import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.enums.AdStatus;
@@ -14,6 +11,7 @@ import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.models.payment.PaymentReceipt;
 import com.example.adsportalbe.repositories.AdFormatRepository;
 import com.example.adsportalbe.repositories.AdRepository;
+import com.example.adsportalbe.repositories.PaymentReceiptRepository;
 import com.example.adsportalbe.services.AdCacheService;
 import com.example.adsportalbe.services.AdService;
 import com.example.adsportalbe.services.MailService;
@@ -31,9 +29,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,6 +43,7 @@ import java.util.List;
 public class AdServiceImpl implements AdService {
 
     private final AdRepository adRepository;
+    private final PaymentReceiptRepository paymentReceiptRepository;
     private final AdFormatRepository adFormatRepository;
     private final PaymentService paymentService;
     private final MailService mailService;
@@ -325,6 +328,7 @@ public class AdServiceImpl implements AdService {
 
                 // 4. Update payment receipt status
                 receipt.setStatus("CAPTURED");
+                receipt.setPaidAt(Instant.now());
             } catch (StripeException e) {
                 log.error("Failed to capture payment for ad {}: {}", adId, e.getMessage());
                 throw e;
@@ -382,5 +386,61 @@ public class AdServiceImpl implements AdService {
     @Override
     public List<Ad> findAllByOwnerId(Long ownerId) {
         return adRepository.findAllByOwnerId(ownerId);
+    }
+
+    @Override
+    public PurchasedAdsDailyCountDto getPurchasedAdsDailyCounts(LocalDate fromDate) {
+        // Default to 3 months ago if no date provided
+        LocalDate effectiveFromDate = fromDate != null ? fromDate : LocalDate.now().minusMonths(3);
+        LocalDate toDate = LocalDate.now();
+
+        // Convert to Instant for query (start of day for fromDate, end of day for
+        // toDate)
+        Instant fromInstant = effectiveFromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant toInstant = toDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
+
+        List<Ad> approvedAds = adRepository.findApprovedAdsBetweenDates(fromInstant, toInstant);
+
+        // Group ads by date and count
+        Map<LocalDate, Long> countsByDate = approvedAds.stream()
+                .collect(Collectors.groupingBy(
+                        ad -> ad.getApprovedAt().atZone(ZoneId.systemDefault()).toLocalDate(),
+                        Collectors.counting()));
+
+        // Convert to list of DailyPurchaseCount, sorted by date
+        List<PurchasedAdsDailyCountDto.DailyPurchaseCount> dailyCounts = countsByDate.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> PurchasedAdsDailyCountDto.DailyPurchaseCount.builder()
+                        .date(entry.getKey())
+                        .count(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        long totalCount = approvedAds.size();
+
+        return PurchasedAdsDailyCountDto.builder()
+                .dailyCounts(dailyCounts)
+                .totalCount(totalCount)
+                .build();
+    }
+
+    @Override
+    public RevenueDto getDailyRevenueStats() {
+        LocalDate today = LocalDate.now();
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        Instant activeTodayStart = today.atStartOfDay(zoneId).toInstant();
+        Instant activeTodayEnd = Instant.now();
+
+        Instant yesterdayStart = today.minusDays(1).atStartOfDay(zoneId).toInstant();
+        Instant yesterdayEnd = activeTodayStart.minusSeconds(1);
+
+        Double todayRevenue = paymentReceiptRepository.sumAmountPaidByPaidAtBetween(activeTodayStart, activeTodayEnd);
+        Double yesterdayRevenue = paymentReceiptRepository.sumAmountPaidByPaidAtBetween(yesterdayStart, yesterdayEnd);
+
+        return RevenueDto.builder()
+                .todayRevenue(todayRevenue != null ? todayRevenue : 0.0)
+                .yesterdayRevenue(yesterdayRevenue != null ? yesterdayRevenue : 0.0)
+                .build();
     }
 }

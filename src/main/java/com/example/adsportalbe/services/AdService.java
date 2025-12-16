@@ -1,15 +1,13 @@
 package com.example.adsportalbe.services;
 
-import com.example.adsportalbe.dto.ad.AdDetailedViewDto;
-import com.example.adsportalbe.dto.ad.AdDto;
-import com.example.adsportalbe.dto.ad.AdStatusCountDto;
-import com.example.adsportalbe.dto.ad.CreateAdRequestDto;
+import com.example.adsportalbe.dto.ad.*;
 import com.example.adsportalbe.dto.requests.AdSearchRequestDto;
 import com.example.adsportalbe.models.ad.Ad;
 import com.example.adsportalbe.models.identity.User;
 import com.stripe.exception.StripeException;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface AdService {
@@ -27,6 +25,8 @@ public interface AdService {
 
     AdDetailedViewDto approveAd(Long adId) throws StripeException;
 
+    RevenueDto getDailyRevenueStats();
+
     Ad save(Ad ad);
 
     List<Ad> saveAll(List<Ad> ads);
@@ -34,4 +34,6 @@ public interface AdService {
     List<Ad> findAllById(Iterable<Long> ids);
 
     List<Ad> findAllByOwnerId(Long ownerId);
+
+    PurchasedAdsDailyCountDto getPurchasedAdsDailyCounts(LocalDate fromDate);
 }

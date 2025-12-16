@@ -4,7 +4,7 @@ import com.example.adsportalbe.models.ad.Ad;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "payment_receipts")
@@ -31,7 +31,7 @@ public class PaymentReceipt {
 
     private Double amountPaid;
 
-    private LocalDateTime paidAt;
+    private Instant paidAt;
 
     @OneToOne
     @JoinColumn(name = "ad_id")
