@@ -34,7 +34,8 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         try {
             log.info("Starting DataSeeding...");
-            User user = seedUser();
+            User user = seedUser("test@test.com", Role.USER);
+            User user2 = seedUser("admin@test.com", Role.ADMIN);
             seedAdFormats();
             seedAds(user);
             log.info("DataSeeding completed successfully.");
@@ -43,8 +44,7 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private User seedUser() {
-        String email = "seed.user@example.com";
+    private User seedUser(String email, Role role) {
         return userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     log.info("Seeding user: {}", email);
@@ -53,7 +53,7 @@ public class DataSeeder implements CommandLineRunner {
                             .lastName("User")
                             .email(email)
                             .password(passwordEncoder.encode("password"))
-                            .role(Role.USER)
+                            .role(role)
                             .emailVerified(true)
                             .subscribedToMarketingEmails(false)
                             .build();
