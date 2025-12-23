@@ -2,9 +2,6 @@ server:
   port: 8081
 logging:
   level:
-    root: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.web.servlet: DEBUG
     org.hibernate: DEBUG
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
 
