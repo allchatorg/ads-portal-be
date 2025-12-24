@@ -62,11 +62,10 @@ public class SecurityConfig {
                 .map(String::trim)
                 .toList();
 
-        System.out.println(allowedOrigins);
-
-        configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedOriginPatterns(allowedOrigins); // Use patterns instead
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type")); // Add this
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
