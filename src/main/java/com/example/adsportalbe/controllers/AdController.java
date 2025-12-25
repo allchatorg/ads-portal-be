@@ -110,7 +110,10 @@ public class AdController {
         // a system or the user itself.
         // Given the optional IP, I'll pass it through.
 
+        log.info("Serving ad for user {} from IP {}", request.getUserId(), request.getIpAddress());
+
         ServedAdDto servedAd = adStatisticsService.serveAd(request.getUserId(), request.getIpAddress());
+
 
         log.info("Served ad: {}", servedAd);
 
