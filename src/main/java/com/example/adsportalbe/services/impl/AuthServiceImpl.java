@@ -53,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
         user = userRepository.save(user);
 
         // Send verification email
-        userService.sendEmailVerification(user);
+//        userService.sendEmailVerification(user);
 
         // Generate JWT token
         String jwtToken = jwtUtils.generateToken(user);
