@@ -5,6 +5,8 @@ logging:
     root: INFO
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
     com.example.adsportalbe: DEBUG
+    org.springframework.web: ERROR
+    org.springframework.boot.web.servlet: ERROR
 
 spring:
   datasource:
