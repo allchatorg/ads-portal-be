@@ -23,7 +23,7 @@ public class AdImpressionProcessingJob {
 
     @Scheduled(fixedRate = 5000)
     public void processImpressionsFromCache() {
-        log.trace("Starting scheduled ad impression processing");
+//        log.trace("Starting scheduled ad impression processing");
 
         Set<Long> activeAdIds = adCacheService.getAllActiveAdIds();
 
@@ -32,7 +32,7 @@ public class AdImpressionProcessingJob {
             return;
         }
 
-        log.debug("Processing impressions for {} active ads", activeAdIds.size());
+//        log.debug("Processing impressions for {} active ads", activeAdIds.size());
 
         for (Long adId : activeAdIds) {
             try {
@@ -42,7 +42,7 @@ public class AdImpressionProcessingJob {
                     continue;
                 }
 
-                log.info("Processing {} impressions for ad ID: {}", impressions.size(), adId);
+//                log.info("Processing {} impressions for ad ID: {}", impressions.size(), adId);
                 adStatisticsService.processImpressionsForAd(adId, impressions);
             } catch (Exception e) {
                 log.error("Failed to process impressions for ad ID: {}", adId, e);
