@@ -11,6 +11,7 @@ import com.example.adsportalbe.services.AdStatisticsService;
 import com.example.adsportalbe.services.UserService;
 import com.stripe.exception.StripeException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/ads")
 @RequiredArgsConstructor
@@ -109,6 +111,9 @@ public class AdController {
         // Given the optional IP, I'll pass it through.
 
         ServedAdDto servedAd = adStatisticsService.serveAd(request.getUserId(), request.getIpAddress());
+
+        log.info("Served ad: {}", servedAd);
+
         if (servedAd == null) {
             return ResponseEntity.noContent().build();
         }
