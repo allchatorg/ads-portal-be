@@ -2,8 +2,9 @@ server:
   port: 8081
 logging:
   level:
-    org.hibernate: DEBUG
+    root: INFO
     org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+    com.example.adsportalbe: DEBUG
 
 spring:
   datasource:
