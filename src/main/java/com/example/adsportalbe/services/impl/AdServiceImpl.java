@@ -217,7 +217,7 @@ public class AdServiceImpl implements AdService {
 
         // Default sort if none provided or empty
         if (sortOrders.isEmpty()) {
-            sortOrders.add(Sort.Order.desc("submittedAt"));
+            sortOrders.add(Sort.Order.asc("submittedAt"));
         }
 
         PageRequest pageRequest = PageRequest.of(

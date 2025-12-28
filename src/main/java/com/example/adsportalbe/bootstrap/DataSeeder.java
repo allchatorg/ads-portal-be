@@ -34,10 +34,9 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         try {
             log.info("Starting DataSeeding...");
-            User user = seedUser("test@test.com", Role.USER);
-            User user2 = seedUser("admin@test.com", Role.ADMIN);
+//            User user = seedUser("test@test.com", Role.USER);
+            seedUser("admin@test.com", Role.ADMIN);
             seedAdFormats();
-            seedAds(user);
             log.info("DataSeeding completed successfully.");
         } catch (Exception e) {
             log.error("DataSeeding failed: {}", e.getMessage(), e);
@@ -72,7 +71,6 @@ public class DataSeeder implements CommandLineRunner {
                     .description("Simple text-based advertisement.")
                     .pricePerMille(2.0)
                     .recommended(false)
-                    .features(List.of("100 chars"))
                     .build());
 
             formats.add(AdFormat.builder()
@@ -90,7 +88,6 @@ public class DataSeeder implements CommandLineRunner {
                     .description("Video-based advertisement.")
                     .pricePerMille(10.0)
                     .recommended(false)
-                    .features(List.of("30s Video"))
                     .build());
 
             adFormatRepository.saveAll(formats);
