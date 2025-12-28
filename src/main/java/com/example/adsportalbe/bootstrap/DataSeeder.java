@@ -32,16 +32,16 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-//        try {
-//            log.info("Starting DataSeeding...");
-//            User user = seedUser("test@test.com", Role.USER);
-//            User user2 = seedUser("admin@test.com", Role.ADMIN);
-//            seedAdFormats();
-//            seedAds(user);
-//            log.info("DataSeeding completed successfully.");
-//        } catch (Exception e) {
-//            log.error("DataSeeding failed: {}", e.getMessage(), e);
-//        }
+        try {
+            log.info("Starting DataSeeding...");
+            User user = seedUser("test@test.com", Role.USER);
+            User user2 = seedUser("admin@test.com", Role.ADMIN);
+            seedAdFormats();
+            seedAds(user);
+            log.info("DataSeeding completed successfully.");
+        } catch (Exception e) {
+            log.error("DataSeeding failed: {}", e.getMessage(), e);
+        }
     }
 
     private User seedUser(String email, Role role) {
