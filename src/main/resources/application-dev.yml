@@ -32,10 +32,11 @@ spring:
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
-            required: false
+            enable: true
+            required: true
+          localhost: allchat.org
     protocol: smtp
   data:
     redis:

@@ -39,119 +39,119 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public void sendResetPasswordEmail(User user, String token) {
-//        String resetLink = FRONT_END_URL + "/reset-password?token=" + token;
-//
-//        Context context = new Context();
-//        context.setVariable("name", user.getFirstName());
-//        context.setVariable("resetLink", resetLink);
-//
-//        String htmlContent = templateEngine.process("RESET_PASSWORD_TEMPLATE", context);
-//
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-//
-//            helper.setTo(user.getEmail());
-//            helper.setSubject("Password Reset");
-//            helper.setText(htmlContent, true);
-//            helper.setFrom(MAIL_USERNAME, FROM_NAME);
-//
-//            mailSender.send(message);
-//        } catch (MessagingException | UnsupportedEncodingException e) {
-//            throw new RuntimeException("Failed to send reset password email", (Throwable) e);
-//        }
+        String resetLink = FRONT_END_URL + "/reset-password?token=" + token;
+
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("resetLink", resetLink);
+
+        String htmlContent = templateEngine.process("RESET_PASSWORD_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Password Reset");
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send reset password email", (Throwable) e);
+        }
     }
 
     @Override
     public void sendVerificationEmail(User user, String code) {
-//        Context context = new Context();
-//        context.setVariable("name", user.getFirstName());
-//        context.setVariable("verificationCode", code);
-//
-//        String htmlContent = templateEngine.process("EMAIL_VERIFICATION_TEMPLATE", context);
-//
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-//
-//            helper.setTo(user.getEmail());
-//            helper.setSubject("Email Verification");
-//            helper.setText(htmlContent, true);
-//            helper.setFrom(MAIL_USERNAME, FROM_NAME);
-//
-//            mailSender.send(message);
-//        } catch (MessagingException | UnsupportedEncodingException e) {
-//            throw new RuntimeException("Failed to send verification email", e);
-//        }
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("verificationCode", code);
+
+        String htmlContent = templateEngine.process("EMAIL_VERIFICATION_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Email Verification");
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send verification email", e);
+        }
     }
 
     @Override
     public void sendEmailUpdateVerification(String newEmail, String code) {
-//        Context context = new Context();
-//        context.setVariable("verificationCode", code);
-//        context.setVariable("newEmail", newEmail);
-//
-//        String htmlContent = templateEngine.process("EMAIL_UPDATE_TEMPLATE", context);
-//
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-//
-//            helper.setTo(newEmail);
-//            helper.setSubject("Email Update Verification");
-//            helper.setText(htmlContent, true);
-//            helper.setFrom(MAIL_USERNAME, FROM_NAME);
-//
-//            mailSender.send(message);
-//        } catch (MessagingException | UnsupportedEncodingException e) {
-//            throw new RuntimeException("Failed to send email update verification", e);
-//        }
+        Context context = new Context();
+        context.setVariable("verificationCode", code);
+        context.setVariable("newEmail", newEmail);
+
+        String htmlContent = templateEngine.process("EMAIL_UPDATE_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(newEmail);
+            helper.setSubject("Email Update Verification");
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send email update verification", e);
+        }
     }
 
     @Override
     public void sendAdRejectionEmail(User user, String adTitle, String rejectionReason) {
-//        Context context = new Context();
-//        context.setVariable("name", user.getFirstName());
-//        context.setVariable("adTitle", adTitle);
-//        context.setVariable("rejectionReason", rejectionReason);
-//
-//        String htmlContent = templateEngine.process("AD_REJECTION_TEMPLATE", context);
-//
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-//
-//            helper.setTo(user.getEmail());
-//            helper.setSubject("Ad Rejected - " + adTitle);
-//            helper.setText(htmlContent, true);
-//            helper.setFrom(MAIL_USERNAME, FROM_NAME);
-//
-//            mailSender.send(message);
-//        } catch (MessagingException | UnsupportedEncodingException e) {
-//            throw new RuntimeException("Failed to send ad rejection email", e);
-//        }
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("adTitle", adTitle);
+        context.setVariable("rejectionReason", rejectionReason);
+
+        String htmlContent = templateEngine.process("AD_REJECTION_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Ad Rejected - " + adTitle);
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send ad rejection email", e);
+        }
     }
 
     @Override
     public void sendAdApprovalEmail(User user, String adTitle) {
-//        Context context = new Context();
-//        context.setVariable("name", user.getFirstName());
-//        context.setVariable("adTitle", adTitle);
-//
-//        String htmlContent = templateEngine.process("AD_APPROVAL_TEMPLATE", context);
-//
-//        try {
-//            MimeMessage message = mailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
-//
-//            helper.setTo(user.getEmail());
-//            helper.setSubject("Ad Approved - " + adTitle);
-//            helper.setText(htmlContent, true);
-//            helper.setFrom(MAIL_USERNAME, FROM_NAME);
-//
-//            mailSender.send(message);
-//        } catch (MessagingException | UnsupportedEncodingException e) {
-//            throw new RuntimeException("Failed to send ad approval email", e);
-//        }
+        Context context = new Context();
+        context.setVariable("name", user.getFirstName());
+        context.setVariable("adTitle", adTitle);
+
+        String htmlContent = templateEngine.process("AD_APPROVAL_TEMPLATE", context);
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, "utf-8");
+
+            helper.setTo(user.getEmail());
+            helper.setSubject("Ad Approved - " + adTitle);
+            helper.setText(htmlContent, true);
+            helper.setFrom(MAIL_USERNAME, FROM_NAME);
+
+            mailSender.send(message);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            throw new RuntimeException("Failed to send ad approval email", e);
+        }
     }
 }
