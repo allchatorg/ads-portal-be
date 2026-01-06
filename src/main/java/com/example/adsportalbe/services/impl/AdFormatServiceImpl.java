@@ -80,7 +80,7 @@ public class AdFormatServiceImpl implements AdFormatService {
                     .recommended(false)
                     .features(List.of("Text-only"))
                     .textPricingTiers(List.of(
-                            new TextPricingTierRule(125, 0.5),
+                            new TextPricingTierRule(125, 10.0),
                             new TextPricingTierRule(250, 15.0),
                             new TextPricingTierRule(500, 20.0)))
                     .build();
@@ -98,7 +98,7 @@ public class AdFormatServiceImpl implements AdFormatService {
                     .type(AdFormatType.VIDEO)
                     .title("Video Ad")
                     .description("Engaging video content")
-                    .pricePerMille(0.5)
+                    .pricePerMille(30.0)
                     .recommended(true)
                     .features(List.of("MP4 support", "High conversion rate"))
                     .build();
