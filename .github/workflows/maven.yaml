@@ -42,3 +42,9 @@ jobs:
           push: true
           tags: allchatorg/ads-portal-be:latest
           platforms: linux/amd64,linux/arm64
+
+      - name: Trigger Coolify Deploy
+        run: |
+          curl -X POST "http://138.199.174.117:8000/api/v1/deploy?uuid=nocw0kowww8ko8swk048c8w4&force=false" \
+            -H "Authorization: Bearer ${{ secrets.COOLIFY_API_TOKEN }}" \
+            -H "Content-Type: application/json"
