@@ -47,6 +47,12 @@ public class User extends Base implements UserDetails {
     @Builder.Default
     private boolean subscribedToMarketingEmails = true;
 
+    @Column(nullable = false)
+    private boolean isOver18;
+
+    @Column(nullable = false)
+    private boolean acceptsPolicies;
+
     @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 

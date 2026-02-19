@@ -48,12 +48,11 @@ public class AuthServiceImpl implements AuthService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .emailVerified(false) // User needs to verify email
+                .isOver18(request.isOver18())
+                .acceptsPolicies(request.isAcceptsPolicies())
                 .build();
 
         user = userRepository.save(user);
-
-        // Send verification email
-//        userService.sendEmailVerification(user);
 
         // Generate JWT token
         String jwtToken = jwtUtils.generateToken(user);
