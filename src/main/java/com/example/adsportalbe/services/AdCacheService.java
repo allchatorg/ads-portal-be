@@ -64,27 +64,30 @@ public class AdCacheService {
         }
 
         String adIdStr = randomIdObj.toString();
-        String detailsKey = AD_DETAILS_KEY_PREFIX + adIdStr;
+        Long adId;
+        try {
+            adId = Long.valueOf(adIdStr);
+        } catch (NumberFormatException e) {
+            log.warn("Invalid ad ID in active cache set: {}", adIdStr);
+            redisTemplate.opsForSet().remove(AD_ACTIVE_SET_KEY, adIdStr);
+            return null;
+        }
+
+        String detailsKey = AD_DETAILS_KEY_PREFIX + adId;
 
         Object adObj = redisTemplate.opsForValue().get(detailsKey);
 
-        if (!(adObj instanceof CachedAd)) {
-            throw new RuntimeException("Cached ad details not of type CachedAd");
-        }
-        if (adObj instanceof CachedAd) {
-            CachedAd cachedAd = (CachedAd) adObj;
-            long currentCachedViews = getViewCount(cachedAd.getId());
-            int baseServedViews = cachedAd.getServedViews() != null ? cachedAd.getServedViews() : 0;
-            cachedAd.setServedViews(baseServedViews + (int) currentCachedViews);
-            return cachedAd;
+        if (!(adObj instanceof CachedAd cachedAd)) {
+            log.warn("Could not retrieve valid cached details for ad ID: {}. Removing stale entry.", adId);
+            removeAd(adId);
+            return null;
         }
 
-        // If details generic fetch failed or mismatched type
-        log.warn("Could not retrieve details for ad ID: {}", adIdStr);
-        // Clean up inconsistency
-        removeAd(Long.valueOf(adIdStr));
-
-        return null;
+        Long effectiveAdId = cachedAd.getId() != null ? cachedAd.getId() : adId;
+        long currentCachedViews = getViewCount(effectiveAdId);
+        int baseServedViews = cachedAd.getServedViews() != null ? cachedAd.getServedViews() : 0;
+        cachedAd.setServedViews(baseServedViews + (int) currentCachedViews);
+        return cachedAd;
     }
 
     public void incrementViewCount(Long adId) {

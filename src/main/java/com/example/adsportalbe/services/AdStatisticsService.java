@@ -54,6 +54,7 @@ public class AdStatisticsService {
         List<AdImpression> impressionsToSave = new ArrayList<>();
         List<AdDailyStatistics> dailyStatsToSave = new ArrayList<>();
         List<Ad> adsToUpdate = new ArrayList<>();
+        Set<Long> completedAdIds = new HashSet<>();
 
         impressionsByAdId.forEach((adId, impressions) -> {
             Ad ad = adsById.get(adId);
@@ -72,11 +73,15 @@ public class AdStatisticsService {
                 dailyStatsToSave.add(stats);
             });
 
-            updateAdViewsAndStatus(ad, impressions.size());
+            boolean completed = updateAdViewsAndStatus(ad, impressions.size());
+            if (completed && ad.getId() != null) {
+                completedAdIds.add(ad.getId());
+            }
             adsToUpdate.add(ad);
         });
 
         batchSave(impressionsToSave, dailyStatsToSave, adsToUpdate);
+        removeCompletedAdsFromCache(completedAdIds);
 
         log.info("Successfully processed {} impressions across {} ads",
                 impressionDtos.size(), adsById.size());
@@ -101,6 +106,7 @@ public class AdStatisticsService {
         List<Ad> ads = adService.findAllById(List.of(adId));
         if (ads.isEmpty()) {
             log.error("Ad not found with ID: {}", adId);
+            adCacheService.removeAd(adId);
             return;
         }
         Ad ad = ads.get(0);
@@ -130,10 +136,14 @@ public class AdStatisticsService {
         });
 
         // Update ad views and status
-        updateAdViewsAndStatus(ad, impressionDtos.size());
+        boolean completed = updateAdViewsAndStatus(ad, impressionDtos.size());
 
         // Save everything
         batchSave(impressionsToSave, dailyStatsToSave, List.of(ad));
+
+        if (completed) {
+            adCacheService.removeAd(adId);
+        }
 
         log.info("Successfully processed {} impressions for ad ID: {}", impressionDtos.size(), adId);
     }
@@ -217,7 +227,7 @@ public class AdStatisticsService {
                         .build());
     }
 
-    private void updateAdViewsAndStatus(Ad ad, int newViewsCount) {
+    private boolean updateAdViewsAndStatus(Ad ad, int newViewsCount) {
         int currentViews = Optional.ofNullable(ad.getServedViews()).orElse(0);
         ad.setServedViews(currentViews + newViewsCount);
 
@@ -225,7 +235,9 @@ public class AdStatisticsService {
             ad.setStatus(AdStatus.COMPLETED);
             log.info("Ad {} reached completion threshold ({}/{}). Status updated to COMPLETED.",
                     ad.getId(), ad.getServedViews(), ad.getTotalViewsBought());
+            return true;
         }
+        return false;
     }
 
     private boolean shouldMarkAsCompleted(Ad ad) {
@@ -242,6 +254,19 @@ public class AdStatisticsService {
         adImpressionRepository.saveAll(impressions);
         adDailyStatisticsRepository.saveAll(dailyStats);
         adService.saveAll(ads);
+    }
+
+    private void removeCompletedAdsFromCache(Set<Long> completedAdIds) {
+        if (completedAdIds == null || completedAdIds.isEmpty()) {
+            return;
+        }
+        for (Long completedAdId : completedAdIds) {
+            try {
+                adCacheService.removeAd(completedAdId);
+            } catch (Exception e) {
+                log.error("Failed to remove completed ad {} from cache", completedAdId, e);
+            }
+        }
     }
 
     @Transactional

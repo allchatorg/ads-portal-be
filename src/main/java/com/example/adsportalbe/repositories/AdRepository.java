@@ -1,6 +1,7 @@
 package com.example.adsportalbe.repositories;
 
 import com.example.adsportalbe.dto.ad.AdStatusCountDto;
+import com.example.adsportalbe.enums.AdStatus;
 import com.example.adsportalbe.models.ad.Ad;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -24,4 +25,6 @@ public interface AdRepository extends JpaRepository<Ad, Long>, JpaSpecificationE
 
     @Query("SELECT a FROM Ad a WHERE a.approvedAt IS NOT NULL AND a.approvedAt >= :fromDate AND a.approvedAt <= :toDate ORDER BY a.approvedAt ASC")
     List<Ad> findApprovedAdsBetweenDates(@Param("fromDate") Instant fromDate, @Param("toDate") Instant toDate);
+
+    List<Ad> findAllByStatus(AdStatus status);
 }

@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: dev
+    active: prod
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -8,7 +8,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -36,8 +36,8 @@ spring:
       username: ${SPRING_DATA_REDIS_USERNAME}
   servlet:
     multipart:
-      max-file-size: 11MB
-      max-request-size: 11MB
+      max-file-size: 30MB
+      max-request-size: 30MB
   quartz:
     job-store-type: jdbc
     properties:

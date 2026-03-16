@@ -350,8 +350,7 @@ public class AdServiceImpl implements AdService {
         try {
             adCacheService.cacheAd(adMapper.toCachedAd(savedAd));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to cache ad " + adId, e);
-            // Don't throw - caching failure shouldn't fail the approval
+            log.error("Failed to cache ad {} during approval. It will be picked up by reconciliation.", adId, e);
         }
 
         // 9. Send approval email to ad owner
