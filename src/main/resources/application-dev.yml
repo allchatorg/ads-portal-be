@@ -58,8 +58,10 @@ spring:
       initialize-schema: always
 
 app:
-  FRONT_END:
-    URL: ${APP_FRONTEND_URL}
+  frontend:
+    url: ${APP_FRONTEND_URL}
+  cors:
+    allow-all: ${APP_CORS_ALLOW_ALL:false}
 
   level:
     com.example.adsportalbe: debug

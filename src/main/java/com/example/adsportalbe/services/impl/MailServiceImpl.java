@@ -26,7 +26,7 @@ public class MailServiceImpl implements MailService {
 
     private final String FROM_NAME = "AllChat Team";
 
-    @Value("${app.FRONT_END.URL}")
+    @Value("${app.frontend.url}")
     private String FRONT_END_URL;
 
     @Value("${SPRING_MAIL_USERNAME}")
