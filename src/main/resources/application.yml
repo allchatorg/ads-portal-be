@@ -6,7 +6,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -69,12 +69,13 @@ app:
   FRONT_END:
     URL: ${APP_FRONTEND_URL}
 
-aws:
-  s3:
-    access-key: ${AWS_ACCESS_KEY}
-    secret-key: ${AWS_SECRET_KEY}
-    region: ${AWS_REGION}
-    bucket-name: ${AWS_BUCKET_NAME}
+cloudflare:
+  r2:
+    access-key: ${CLOUDFLARE_ACCESS_KEY}
+    secret-key: ${CLOUDFLARE_SECRET_KEY}
+    bucket-name: ${CLOUDFLARE_BUCKET_NAME}
+    endpoint: ${CLOUDFLARE_ENDPOINT}
+    public-url: ${CLOUDFLARE_PUBLIC_URL}
 
 stripe:
   api-key: ${STRIPE_API_KEY}

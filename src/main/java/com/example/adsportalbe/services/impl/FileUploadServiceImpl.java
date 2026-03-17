@@ -21,20 +21,42 @@ public class FileUploadServiceImpl implements FileUploadService {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${aws.s3.bucket-name}")
+    @Value("${cloudflare.r2.bucket-name}")
     private String bucketName;
+
+    @Value("${cloudflare.r2.public-url}")
+    private String publicUrl;
 
     @Value("${spring.profiles.active:prod}")
     private String activeProfile;
 
-    public static String getObjectKey(String s3Url) {
-        if (s3Url == null || s3Url.isEmpty()) {
+    public static String getObjectKey(String r2Url) {
+        if (r2Url == null || r2Url.isEmpty()) {
             return null;
         }
 
-        Pattern pattern = Pattern.compile("https://[^.]+\\.s3\\.[^.]+\\.amazonaws\\.com/(.*)");
-        Matcher matcher = pattern.matcher(s3Url);
+        Pattern publicPattern = Pattern.compile("https://[^/]+\\.r2\\.dev/(.*)");
+        Matcher publicMatcher = publicPattern.matcher(r2Url);
+        if (publicMatcher.matches()) {
+            return publicMatcher.group(1);
+        }
 
+        Pattern storagePattern = Pattern.compile("https://[^.]+\\.r2\\.cloudflarestorage\\.com/[^/]+/(.*)");
+        Matcher storageMatcher = storagePattern.matcher(r2Url);
+        if (storageMatcher.matches()) {
+            return storageMatcher.group(1);
+        }
+
+        return null;
+    }
+
+    public static String getBucketName(String r2Url) {
+        if (r2Url == null || r2Url.isEmpty() || r2Url.contains(".r2.dev/")) {
+            return null;
+        }
+
+        Pattern pattern = Pattern.compile("https://[^.]+\\.r2\\.cloudflarestorage\\.com/([^/]+)/.*");
+        Matcher matcher = pattern.matcher(r2Url);
         if (matcher.matches()) {
             return matcher.group(1);
         }
@@ -49,7 +71,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
         try {
             amazonS3.putObject(new PutObjectRequest(bucketName, key, file));
-            return amazonS3.getUrl(bucketName, key).toString();
+            return publicUrl + "/" + key;
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload file: " + e.getMessage(), e);
         }
@@ -59,20 +81,13 @@ public class FileUploadServiceImpl implements FileUploadService {
     public void deleteFile(String fileURL) {
         try {
             String key = getObjectKey(fileURL);
-            // If the URL logic always returns urls from our bucket, we can just use the
-            // bucketName field.
-            // However, extracting it from URL serves as a sanity check or support for
-            // multi-bucket if needed later,
-            // though the original code extracted it. Let's keep it simple and use the
-            // configured bucket name for deletion
-            // unless we want to strictly follow the provided snippet's logic of extracting
-            // bucket from URL.
-            // The provided snippet extracted bucket name. I'll stick to using the
-            // configured bucket name to be safe against
-            // ensuring we only delete from our bucket, but I will extract the key.
-
             if (key != null) {
-                amazonS3.deleteObject(new DeleteObjectRequest(bucketName, key));
+                String resolvedBucketName = getBucketName(fileURL);
+                if (resolvedBucketName == null) {
+                    resolvedBucketName = bucketName;
+                }
+
+                amazonS3.deleteObject(new DeleteObjectRequest(resolvedBucketName, key));
             }
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete file: " + e.getMessage(), e);
