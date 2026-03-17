@@ -1,6 +1,4 @@
 spring:
-  profiles:
-    active: dev
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -75,15 +73,6 @@ aws:
     secret-key: ${AWS_SECRET_KEY}
     region: ${AWS_REGION}
     bucket-name: ${AWS_BUCKET_NAME}
-
-clamav:
-  host: ${CLAM_AV_HOST}
-  port: ${CLAM_AV_PORT}
-
-twilio:
-  account-sid: ${TWILIO_ACCOUNT_SID}
-  auth-token: ${TWILIO_TOKEN}
-  phone-number: ${TWILIO_PHONE_NUMBER}
 
 stripe:
   api-key: ${STRIPE_API_KEY}
