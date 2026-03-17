@@ -31,7 +31,6 @@ spring:
       host: ${SPRING_DATA_REDIS_HOST}
       port: ${SPRING_DATA_REDIS_PORT}
       password: ${SPRING_DATA_REDIS_PASSWORD}
-      username: ${SPRING_DATA_REDIS_USERNAME}
   servlet:
     multipart:
       max-file-size: 30MB
@@ -53,6 +52,8 @@ spring:
     timeout: 1800s
 
 server:
+  address: 0.0.0.0
+  port: 8081
   forward-headers-strategy: framework
   servlet:
     session:
