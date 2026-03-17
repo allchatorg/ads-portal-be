@@ -66,10 +66,8 @@ server:
         max-age: 1800s
 
 app:
-  frontend:
-    url: ${APP_FRONTEND_URL}
-  cors:
-    allow-all: ${APP_CORS_ALLOW_ALL:false}
+  FRONT_END:
+    URL: ${APP_FRONTEND_URL}
 
 aws:
   s3:

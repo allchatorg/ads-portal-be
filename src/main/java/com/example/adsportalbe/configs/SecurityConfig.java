@@ -2,11 +2,9 @@ package com.example.adsportalbe.configs;
 
 import com.example.adsportalbe.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -22,6 +20,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,18 +28,14 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@Slf4j
 @org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${app.frontend.url:}")
+    @Value("${app.frontend.url}")
     private String frontendUrls;
-
-    @Value("${app.cors.allow-all:false}")
-    private boolean allowAllCorsOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -63,21 +58,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> allowedOrigins;
-        if (allowAllCorsOrigins) {
-            log.warn("CORS allow-all mode is enabled. This should only be used temporarily for troubleshooting.");
-            allowedOrigins = List.of("*");
-        } else {
-            allowedOrigins = Arrays.stream(frontendUrls.split(","))
-                    .map(String::trim)
-                    .filter(origin -> !origin.isEmpty())
-                    .toList();
-        }
+        List<String> allowedOrigins = Arrays.stream(frontendUrls.split(","))
+                .map(String::trim)
+                .toList();
 
-        configuration.setAllowedOriginPatterns(allowedOrigins);
+        configuration.setAllowedOriginPatterns(allowedOrigins); // Use patterns instead
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type")); // Add this
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
