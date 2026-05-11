@@ -80,6 +80,12 @@ cloudflare:
 stripe:
   api-key: ${STRIPE_API_KEY}
 
+twilio:
+  messaging-service-sid: ${TWILIO_MESSAGING_SERVICE_SID:}
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_TOKEN:}
+  phone-number: ${TWILIO_PHONE_NUMBER:}
+
 logging:
   level:
     org:

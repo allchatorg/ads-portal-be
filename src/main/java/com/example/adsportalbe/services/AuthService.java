@@ -15,5 +15,7 @@ public interface AuthService {
 
     void initiatePasswordReset(ForgotPasswordRequestDto request);
 
+    PhonePasswordResetVerificationResponseDto verifyPhonePasswordReset(PhonePasswordResetVerificationRequestDto request);
+
     User resetPassword(ResetPasswordRequestDto request);
 }

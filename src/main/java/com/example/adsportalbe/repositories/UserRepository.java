@@ -13,7 +13,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findByEmail(String email);
 
+    Optional<User> findByEmailIgnoreCase(String email);
+
+    Optional<User> findByPhoneNumber(String phoneNumber);
+
     boolean existsByEmail(String email);
+
+    boolean existsByPhoneNumber(String phoneNumber);
 
     @Query("SELECT new com.example.adsportalbe.dto.AdminUserDto(" +
             "u.id, u.firstName, u.lastName, u.email, u.role, " +

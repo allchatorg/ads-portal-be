@@ -8,6 +8,7 @@ import org.hibernate.annotations.Formula;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,6 +37,9 @@ public class User extends Base implements UserDetails {
 
     @Column(unique = true)
     private String phoneNumber;
+
+    @Column
+    private Instant phoneNumberVerificationDate;
 
     @Column(nullable = false)
     private String password;

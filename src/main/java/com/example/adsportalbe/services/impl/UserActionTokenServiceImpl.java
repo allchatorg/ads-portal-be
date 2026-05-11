@@ -19,6 +19,7 @@ public class UserActionTokenServiceImpl implements UserActionTokenService {
     private static final long PASSWORD_RESET_TOKEN_EXPIRATION = 60L * 60L; // 60 minutes in seconds
     private static final long EMAIL_VERIFICATION_TOKEN_EXPIRATION = 60L * 15L; // 15 minutes in seconds
     private static final long PHONE_VERIFICATION_TOKEN_EXPIRATION = 60L * 5L; // 5 minutes in seconds
+    private static final long PHONE_PASSWORD_RESET_TOKEN_EXPIRATION = 60L * 5L; // 5 minutes in seconds
     private final UserActionTokenRepository userActionTokenRepository;
 
     @Override
@@ -96,6 +97,22 @@ public class UserActionTokenServiceImpl implements UserActionTokenService {
                 .token(sixDigitToken)
                 .expiryDate(Instant.now().plusSeconds(EMAIL_VERIFICATION_TOKEN_EXPIRATION))
                 .type(TokenType.EMAIL_UPDATE)
+                .build();
+
+        return save(token);
+    }
+
+    @Override
+    public UserActionToken createPhonePasswordResetTokenForUser(User user, String phoneNumber) {
+        String sixDigitToken = generateSixDigitToken();
+
+        UserActionToken token = UserActionToken.builder()
+                .user(user)
+                .email(user.getEmail())
+                .phoneNumber(phoneNumber)
+                .token(sixDigitToken)
+                .expiryDate(Instant.now().plusSeconds(PHONE_PASSWORD_RESET_TOKEN_EXPIRATION))
+                .type(TokenType.PHONE_PASSWORD_RESET)
                 .build();
 
         return save(token);

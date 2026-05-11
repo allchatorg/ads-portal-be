@@ -57,7 +57,13 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequestDto request) {
         authService.initiatePasswordReset(request);
-        return ResponseEntity.ok(Map.of("message", "Password reset email sent"));
+        return ResponseEntity.ok(Map.of("message", "If that account can be used for recovery, reset instructions have been sent."));
+    }
+
+    @PostMapping("/forgot-password/verify-phone-code")
+    public ResponseEntity<PhonePasswordResetVerificationResponseDto> verifyPhonePasswordReset(
+            @Valid @RequestBody PhonePasswordResetVerificationRequestDto request) {
+        return ResponseEntity.ok(authService.verifyPhonePasswordReset(request));
     }
 
     @PostMapping("/reset-password")
@@ -79,6 +85,21 @@ public class AuthController {
             @Valid @RequestBody VerifyEmailRequestDto request) {
         userService.verifyEmail(request.token());
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
+
+    @PostMapping("/send-phone-verification")
+    public ResponseEntity<Map<String, String>> sendPhoneVerification(
+            @Valid @RequestBody SendPhoneVerificationRequestDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        userService.sendPhoneVerification(request, user);
+        return ResponseEntity.ok(Map.of("message", "Verification code sent to phone"));
+    }
+
+    @PostMapping("/verify-phone")
+    public ResponseEntity<UserDto> verifyPhone(
+            @Valid @RequestBody VerifyPhoneRequestDto request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userService.verifyPhone(request, user));
     }
 
     @PostMapping("/change-password")

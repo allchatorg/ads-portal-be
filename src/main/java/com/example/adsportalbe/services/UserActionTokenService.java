@@ -13,6 +13,8 @@ public interface UserActionTokenService {
 
     UserActionToken createEmailUpdateTokenForUser(User user, String newEmail);
 
+    UserActionToken createPhonePasswordResetTokenForUser(User user, String phoneNumber);
+
     UserActionToken findToken(String token);
 
     UserActionToken save(UserActionToken userActionToken);

@@ -3,11 +3,13 @@ package com.example.adsportalbe.services.impl;
 import com.example.adsportalbe.dto.UserDto;
 import com.example.adsportalbe.dto.auth.*;
 import com.example.adsportalbe.enums.TokenType;
+import com.example.adsportalbe.exceptions.ConflictException;
 import com.example.adsportalbe.mappers.UserMapper;
 import com.example.adsportalbe.models.UserActionToken;
 import com.example.adsportalbe.models.identity.User;
 import com.example.adsportalbe.repositories.UserRepository;
 import com.example.adsportalbe.services.MailService;
+import com.example.adsportalbe.services.SmsSenderService;
 import com.example.adsportalbe.services.UserActionTokenService;
 import com.example.adsportalbe.services.UserService;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -26,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final UserActionTokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final SmsSenderService smsSenderService;
     private final UserMapper userMapper;
 
     @Override
@@ -35,11 +39,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Optional<User> findOptionalByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public Optional<User> findOptionalByPhoneNumber(String phoneNumber) {
+        return userRepository.findByPhoneNumber(phoneNumber);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
 
     @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        return userRepository.existsByPhoneNumber(phoneNumber);
+    }
+
+    @Override
+    @Transactional
     public User resetPassword(ResetPasswordRequestDto request) {
         UserActionToken token = tokenService.findToken(request.token());
 
@@ -49,6 +69,10 @@ public class UserServiceImpl implements UserService {
 
         if (token.isUsed()) {
             throw new IllegalArgumentException("Token has already been used");
+        }
+
+        if (!token.getType().equals(TokenType.PASSWORD_RESET)) {
+            throw new IllegalArgumentException("Token is not a password reset token");
         }
 
         User user = findByEmail(token.getEmail());
@@ -88,6 +112,60 @@ public class UserServiceImpl implements UserService {
         tokenService.save(userActionToken);
 
         return save(user);
+    }
+
+    @Override
+    public void sendPhoneVerification(SendPhoneVerificationRequestDto request, User user) {
+        String phoneNumber = smsSenderService.normalizePhoneNumber(request.phoneNumber());
+        User currentUser = findCurrentUser(user);
+
+        findOptionalByPhoneNumber(phoneNumber)
+                .filter(existing -> !existing.getId().equals(currentUser.getId()))
+                .ifPresent(existing -> {
+                    throw new ConflictException("Phone number is already used.");
+                });
+
+        UserActionToken token = tokenService.createPhoneVerificationToken(currentUser, phoneNumber);
+        String smsContent = "Your AllChat Ads Portal verification code is: " + token.getToken();
+        smsSenderService.sendSMS(phoneNumber, smsContent);
+    }
+
+    @Override
+    @Transactional
+    public UserDto verifyPhone(VerifyPhoneRequestDto request, User user) {
+        UserActionToken token = tokenService.findToken(request.verificationCode());
+
+        if (token.getExpiryDate().isBefore(Instant.now())) {
+            throw new ConflictException("Token has expired");
+        }
+
+        if (!token.getType().equals(TokenType.PHONE_VERIFICATION)) {
+            throw new ConflictException("Token is not a phone verification token");
+        }
+
+        if (token.isUsed()) {
+            throw new ConflictException("Token has already been used");
+        }
+
+        User currentUser = findCurrentUser(user);
+
+        if (!token.getUser().getId().equals(currentUser.getId())) {
+            throw new ConflictException("Token does not belong to the authenticated user");
+        }
+
+        findOptionalByPhoneNumber(token.getPhoneNumber())
+                .filter(existing -> !existing.getId().equals(currentUser.getId()))
+                .ifPresent(existing -> {
+                    throw new ConflictException("Phone number is already used.");
+                });
+
+        currentUser.setPhoneNumber(token.getPhoneNumber());
+        currentUser.setPhoneNumberVerificationDate(Instant.now());
+
+        token.setUsed(true);
+        tokenService.save(token);
+
+        return userMapper.toUserDto(save(currentUser));
     }
 
     @Override
@@ -173,5 +251,10 @@ public class UserServiceImpl implements UserService {
     public void updateMarketingPreferences(UpdateMarketingPreferencesDto request, User user) {
         user.setSubscribedToMarketingEmails(request.getSubscribedToMarketingEmails());
         userRepository.save(user);
+    }
+
+    private User findCurrentUser(User user) {
+        return userRepository.findById(user.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + user.getId()));
     }
 }
